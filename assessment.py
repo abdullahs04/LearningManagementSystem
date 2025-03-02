@@ -1,9 +1,16 @@
-from flask import Blueprint, session, request, redirect, url_for, render_template, flash
 import mysql.connector
 import json
-from datetime import datetime
 from database import DB_CONFIG
 from auth import Auth
+from flask import Blueprint, request, render_template, flash, redirect, url_for, session
+from werkzeug.utils import secure_filename
+import os
+import pytz
+from datetime import datetime, timedelta
+import mysql.connector
+
+
+
 
 auth = Auth()
 assessment_bp = Blueprint('assessment', __name__)
@@ -622,3 +629,158 @@ def enter_quiz_marks(quiz_id):
     return render_template('enter_quiz_marks.html', students=students, quiz_id=quiz_id)
 
 
+
+
+
+# Upload Exam by teacher/admin
+@assessment_bp.route('/upload_exam/<int:campus_id>', methods=['GET', 'POST'])
+@auth.login_required('admin')
+def upload_exam(campus_id):
+    """Upload an exam with a PDF file and scheduled start & end time."""
+
+    if request.method == 'POST':
+        subject_id = request.form.get('subject_id')
+        start_datetime = request.form.get('start_time')
+        end_datetime = request.form.get('end_time')
+        exam_pdf = request.files.get('exam_pdf')
+
+        if not subject_id or not start_datetime or not end_datetime or not exam_pdf:
+            flash('All fields are required!', 'danger')
+            return redirect(request.url)
+
+        # Save the uploaded PDF
+        pdf_filename = secure_filename(exam_pdf.filename)
+        pdf_folder = os.path.join('static', 'pdfs')
+        os.makedirs(pdf_folder, exist_ok=True)
+        pdf_path = os.path.join(pdf_folder, pdf_filename)
+        exam_pdf.save(pdf_path)
+
+        # Convert times from Pakistan Standard Time (PST) to GMT
+        pst = pytz.timezone('Asia/Karachi')
+        gmt = pytz.timezone('GMT')
+
+        start_time_obj = pst.localize(datetime.strptime(start_datetime, '%Y-%m-%dT%H:%M'))
+        end_time_obj = pst.localize(datetime.strptime(end_datetime, '%Y-%m-%dT%H:%M'))
+
+        start_time_gmt = start_time_obj.astimezone(gmt)
+        end_time_gmt = end_time_obj.astimezone(gmt)
+
+        # Insert into database
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO Exams (Subject_id, Exam_PDF, Start_Time, End_Time)
+            VALUES (%s, %s, %s, %s)
+        """, (subject_id, f'pdfs/{pdf_filename}', start_time_gmt, end_time_gmt))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        flash('Exam uploaded successfully!', 'success')
+        return redirect(url_for('exam.upload_exam', campus_id=campus_id))
+
+    # Fetch subjects
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT Subject_id, Subject_Name, year FROM Subjects WHERE campusid = %s
+    """, (campus_id,))
+    subjects = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template('upload_exam.html', subjects=subjects, campus_id=campus_id)
+
+
+# Exam Submission by students it can be assignment too
+@assessment_bp.route('/exam_submission/<int:exam_id>', methods=['GET', 'POST'])
+@auth.login_required('student')
+def exam_submission(exam_id):
+    """Handle exam submission and solution uploads."""
+
+    # Fetch exam details
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT Exam_PDF, Start_Time, End_Time FROM Exams WHERE Exam_ID = %s
+    """, (exam_id,))
+    exam_data = cursor.fetchone()
+
+    if not exam_data:
+        cursor.close()
+        conn.close()
+        return "Exam not found", 404
+
+    # Adjust end time by 5 hours
+    exam_end_time = exam_data['End_Time'] + timedelta(hours=5)
+
+    if request.method == 'POST':
+        solution = request.files.get('solution')
+
+        if solution and solution.filename.endswith('.pdf'):
+            filename = secure_filename(solution.filename)
+            solution_folder = os.path.join('static', 'solutions')
+            os.makedirs(solution_folder, exist_ok=True)
+            save_path = os.path.join(solution_folder, filename)
+            solution.save(save_path)
+
+            # Insert submission details
+            cursor.execute("""
+                INSERT INTO Exam_Submissions (Exam_ID, RFID, Solution_PDF, Submission_Time)
+                VALUES (%s, %s, %s, NOW())
+            """, (exam_id, session['rfid'], filename))
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            return redirect(url_for('exam.exam_submission', exam_id=exam_id))
+
+    cursor.close()
+    conn.close()
+
+    return render_template('exam_submission.html',
+                           exam_pdf=exam_data['Exam_PDF'],
+                           exam_start_time=exam_data['Start_Time'],
+                           exam_end_time=exam_end_time,
+                           exam_id=exam_id)
+
+
+# Submission Success Page
+@assessment_bp.route('/submission_success')
+def submission_success():
+    """Display submission success message."""
+    return render_template('submission_success.html')
+
+
+# Submit Solution by students
+@assessment_bp.route('/submit_solution/<int:exam_id>', methods=['POST'])
+@auth.login_required('student')
+def submit_solution(exam_id):
+    """Allow students to submit solutions for an exam."""
+
+    if 'rfid' not in session:
+        return redirect(url_for('login'))
+
+    solution = request.files.get('solution')
+
+    if solution and solution.filename.endswith('.pdf'):
+        filename = secure_filename(solution.filename)
+        solution_folder = os.path.join('static', 'solutions')
+        os.makedirs(solution_folder, exist_ok=True)
+        save_path = os.path.join(solution_folder, filename)
+        solution.save(save_path)
+
+        # Insert into database
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO Exam_Submissions (Exam_ID, RFID, Solution_PDF, Submission_Time)
+            VALUES (%s, %s, %s, NOW())
+        """, (exam_id, session['rfid'], filename))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return redirect(url_for('exam.submission_success'))
+
+    return "Invalid file format. Please upload a PDF.", 400
