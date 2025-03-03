@@ -2,7 +2,7 @@ from flask import Flask,render_template, request
 from auth import auth_bp
 from students import student_bp
 from assessment import assessment_bp
-from subject import subject_bp
+from subjects import subject_bp
 from admin import admin_bp
 from database import Database
 from auth import Auth
