@@ -76,7 +76,7 @@ def update_student_fines(campus_id):
 def list_and_update_fees(campus_id):
     if not campus_id:
         return 'Unauthorized', 403
-
+ 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
