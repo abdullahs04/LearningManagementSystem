@@ -1,22 +1,21 @@
 import mysql.connector
 import json
-from database import DB_CONFIG
-from auth import Auth
-from flask import Blueprint, request, render_template, flash, redirect, url_for, session
-from werkzeug.utils import secure_filename
+from src.database import DB_CONFIG
+from src.auth import Auth
+from flask import Blueprint, request, session, url_for
+from datetime import datetime
 import os
+from werkzeug.utils import secure_filename
 import pytz
-from datetime import datetime, timedelta
-import mysql.connector
-
+from datetime import timedelta
 
 
 
 auth = Auth()
 assessment_bp = Blueprint('assessment', __name__)
 
-# Make Assessment Functions
-@assessment_bp.route('/make_assessment', methods=['GET', 'POST'])
+
+@assessment_bp.route('/api/make_assessment', methods=['POST'])
 @auth.login_required('teacher')
 def make_assessment():
     conn = mysql.connector.connect(**DB_CONFIG)
@@ -26,17 +25,13 @@ def make_assessment():
         teacherid = session['username']
         subjects = fetch_teacher_subjects(cursor, teacherid)
     except mysql.connector.Error as err:
-        print(f"Database Error: {err}")
-        flash('A database error occurred while fetching subjects.', 'error')
-        subjects = []
+        return jsonify({'error': f'Database Error: {err}'}), 500
     finally:
         cursor.close()
         conn.close()
 
-    if request.method == 'POST':
-        return handle_assessment_submission(teacherid, subjects)
-
-    return render_template('make_assessment.html', subjects=subjects)
+    data = request.json
+    return handle_assessment_submission(teacherid, subjects, data)
 
 
 def fetch_teacher_subjects(cursor, teacherid):
@@ -44,20 +39,19 @@ def fetch_teacher_subjects(cursor, teacherid):
     return cursor.fetchall()
 
 
-def handle_assessment_submission(teacherid, subjects):
-    assessment_type = request.form['assessment_type']
-    total_marks = get_total_marks(request.form, assessment_type)
-    grading_criteria = get_grading_criteria(request.form)
-    subject_id = request.form['subject_id']
-    created_at = parse_datetime(request.form['created_at'])
+def handle_assessment_submission(teacherid, subjects, data):
+    assessment_type = data.get('assessment_type')
+    total_marks = get_total_marks(data, assessment_type)
+    grading_criteria = get_grading_criteria(data)
+    subject_id = data.get('subject_id')
+    created_at = parse_datetime(data.get('created_at'))
 
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
     try:
         if assessment_exists(cursor, teacherid, subject_id, assessment_type, created_at):
-            flash(f"An assessment of type '{assessment_type}' has already been created this month.", "error")
-            return redirect(url_for('teacher.make_assessment'))
+            return jsonify({'error': f'Assessment of type {assessment_type} already exists this month'}), 400
 
         sequence = get_next_sequence(cursor, subject_id, assessment_type)
         assessment_id = insert_assessment(cursor, teacherid, subject_id, assessment_type, total_marks, grading_criteria,
@@ -67,39 +61,30 @@ def handle_assessment_submission(teacherid, subjects):
             insert_quizzes(cursor, assessment_id, subject_id)
 
         conn.commit()
-        flash('Assessment created successfully!', 'success')
-        return redirect(url_for('teacher.make_assessment'))
-
+        return jsonify({'message': 'Assessment created successfully', 'assessment_id': assessment_id}), 201
     except mysql.connector.Error as err:
-        print(f"Database Error: {err}")
         conn.rollback()
-        flash('A database error occurred while creating the assessment.', 'error')
+        return jsonify({'error': f'Database Error: {err}'}), 500
     finally:
         cursor.close()
         conn.close()
 
-    return render_template('make_assessment.html', subjects=subjects)
+
+def get_total_marks(data, assessment_type):
+    total_marks = data.get('total_marks')
+    return int(total_marks) if total_marks else (
+        15 if assessment_type == 'Quiz' else 35 if assessment_type == 'Monthly' else 0)
 
 
-def get_total_marks(form, assessment_type):
-    total_marks = form.get('total_marks')
-    if not total_marks:
-        return 15 if assessment_type == 'Quiz' else 35 if assessment_type == 'Monthly' else 0
-    try:
-        return int(total_marks)
-    except ValueError:
-        return 0
-
-
-def get_grading_criteria(form):
+def get_grading_criteria(data):
     return {
-        "A*": form.get('grade_A_star', 90),
-        "A": form.get('grade_A', 80),
-        "B": form.get('grade_B', 70),
-        "C": form.get('grade_C', 60),
-        "D": form.get('grade_D', 50),
-        "E": form.get('grade_E', 40),
-        "F": form.get('grade_F', 30)
+        "A*": data.get('grade_A_star', 90),
+        "A": data.get('grade_A', 80),
+        "B": data.get('grade_B', 70),
+        "C": data.get('grade_C', 60),
+        "D": data.get('grade_D', 50),
+        "E": data.get('grade_E', 40),
+        "F": data.get('grade_F', 30)
     }
 
 
@@ -114,13 +99,12 @@ def assessment_exists(cursor, teacherid, subject_id, assessment_type, created_at
         WHERE teacherid=%s AND subject_id=%s AND assessment_type=%s 
               AND MONTH(created_at)=%s AND YEAR(created_at)=%s
     """, (teacherid, subject_id, assessment_type, created_at.month, created_at.year))
-    return cursor.fetchone()['count'] > 10
+    return cursor.fetchone()['count'] > 0
 
 
 def get_next_sequence(cursor, subject_id, assessment_type):
     base_sequences = {'Monthly': 100, 'Send-Up': 150}
     base_sequence = base_sequences.get(assessment_type, 0)
-
     cursor.execute("""
         SELECT COALESCE(MAX(sequence), %s - 1) AS max_sequence
         FROM Assessments
@@ -144,38 +128,38 @@ def insert_quizzes(cursor, assessment_id, subject_id):
             INSERT INTO quizzes (monthly_assessment_id, quiz_number, created_at, subject_id)
             VALUES (%s, %s, NOW(), %s)
         """, (assessment_id, quiz_number, subject_id))
-#Make Assessment Functions Ended
 
-#View Submissions for a particular Subject
-@assessment_bp.route('/view_submissions/<int:subject_id>')
+
+@assessment_bp.route('/api/view_submissions/<int:subject_id>', methods=['GET'])
 @auth.login_required('teacher')
 def view_submissions(subject_id):
-    """Fetch and display student submissions for a given subject."""
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT st.student_name, es.solution_pdf 
+            FROM Exam_Submissions es
+            JOIN Students st ON es.rfid = st.rfid
+            WHERE es.exam_id IN (
+                SELECT exam_id FROM Exams WHERE subject_id = %s
+            )
+            ORDER BY st.student_name
+        """, (subject_id,))
+        submissions = cursor.fetchall()
+        return jsonify({'submissions': submissions}), 200
+    except mysql.connector.Error as err:
+        return jsonify({'error': f'Database Error: {err}'}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
-    cursor.execute("""
-        SELECT st.student_name, es.solution_pdf 
-        FROM Exam_Submissions es
-        JOIN Students st ON es.rfid = st.rfid
-        WHERE es.exam_id IN (
-            SELECT exam_id FROM Exams WHERE subject_id = %s
-        )
-        ORDER BY st.student_name
-    """, (subject_id,))
-    submissions = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
-
-    return render_template('view_submissions.html', submissions=submissions, subject_id=subject_id)
 #End Submissions
 
-#View and Edit Quiz Marks For Teacher Dashboard
-@assessment_bp.route('/view_quiz_marks/<int:quiz_id>')
+@assessment_bp.route('/api/view_quiz_marks/<int:quiz_id>', methods=['GET'])
 @auth.login_required('teacher')
 def view_quiz_marks(quiz_id):
-    """Fetch and display quiz marks for a given quiz."""
+    """Fetch and return quiz marks as JSON."""
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
@@ -189,7 +173,7 @@ def view_quiz_marks(quiz_id):
     quiz = cursor.fetchone()
 
     if not quiz:
-        return "Quiz not found", 404
+        return jsonify({"error": "Quiz not found"}), 404
 
     cursor.execute("""
         SELECT qm.rfid, st.student_name, qm.marks_achieved
@@ -203,18 +187,20 @@ def view_quiz_marks(quiz_id):
     cursor.close()
     conn.close()
 
-    return render_template('view_quiz_marks.html', quiz=quiz, marks=marks)
+    return jsonify({"quiz": quiz, "marks": marks})
 
-@assessment_bp.route('/update_marks', methods=['POST'])
+
+@assessment_bp.route('/api/update_marks', methods=['POST'])
 @auth.login_required('teacher')
 def update_marks():
-    """Update quiz marks for a student."""
-    quiz_id = request.form['quiz_id']
-    rfid = request.form['rfid']
-    new_marks = request.form['new_marks']
+    """Update quiz marks and return JSON response."""
+    data = request.get_json()
+    quiz_id = data.get('quiz_id')
+    rfid = data.get('rfid')
+    new_marks = data.get('new_marks')
 
     conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
     try:
         cursor.execute("""
@@ -223,26 +209,23 @@ def update_marks():
             WHERE quiz_id = %s AND rfid = %s
         """, (new_marks, quiz_id, rfid))
         conn.commit()
-        flash('Marks updated successfully!', 'success')
+        return jsonify({"message": "Marks updated successfully!"})
     except Exception as e:
         conn.rollback()
-        flash(f'Error updating marks: {str(e)}', 'error')
+        return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
         conn.close()
 
-    return redirect(url_for('assessment.view_quiz_marks', quiz_id=quiz_id))
-#End
 
-#View and Edit Other Assessment Details on Teacher Dashboard
-@assessment_bp.route('/view_marks/<int:assessment_id>', methods=['GET'])
+@assessment_bp.route('/api/view_marks/<int:assessment_id>', methods=['GET'])
 @auth.login_required('teacher')
 def view_marks(assessment_id):
+    """Fetch and return assessment marks as JSON."""
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
-    # Get the assessment detailss
-    cursor.execute(""" 
+    cursor.execute("""
         SELECT a.assessment_id, s.subject_name, a.assessment_type
         FROM Assessments a
         JOIN Subjects s ON a.subject_id = s.subject_id
@@ -251,10 +234,9 @@ def view_marks(assessment_id):
     assessment = cursor.fetchone()
 
     if not assessment:
-        return "Assessment not found", 404
+        return jsonify({"error": "Assessment not found"}), 404
 
-    # Get the marks for the assessment
-    cursor.execute(""" 
+    cursor.execute("""
         SELECT sm.rfid, st.student_name, sm.Marks_Acheived
         FROM assessments_marks sm
         JOIN Students st ON sm.rfid = st.rfid
@@ -266,49 +248,47 @@ def view_marks(assessment_id):
     cursor.close()
     conn.close()
 
-    return render_template('view_marks.html', assessment=assessment, marks=marks)
+    return jsonify({"assessment": assessment, "marks": marks})
 
 
-
-@assessment_bp.route('/update_assessment_marks', methods=['POST'])
+@assessment_bp.route('/api/update_assessment_marks', methods=['POST'])
 @auth.login_required('teacher')
 def update_assessment_marks():
-    assessment_id = request.form['assessment_id']
-    rfid = request.form['rfid']
-    new_marks = request.form['new_marks']
+    """Update assessment marks and return JSON response."""
+    data = request.get_json()
+    assessment_id = data.get('assessment_id')
+    rfid = data.get('rfid')
+    new_marks = data.get('new_marks')
 
     conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor(dictionary=True)
-
+    cursor = conn.cursor()
 
     try:
         cursor.execute("""
-                UPDATE assessments_marks SET Marks_Acheived = %s 
-                WHERE assessment_id = %s AND rfid = %s
-            """, (new_marks, assessment_id, rfid))
+            UPDATE assessments_marks SET Marks_Acheived = %s 
+            WHERE assessment_id = %s AND rfid = %s
+        """, (new_marks, assessment_id, rfid))
         conn.commit()
-        flash('Marks updated successfully!', 'success')
-    except Exception:
+        return jsonify({"message": "Marks updated successfully!"})
+    except Exception as e:
         conn.rollback()
-        flash('An error occurred while updating marks.', 'error')
+        return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
         conn.close()
 
-    return redirect(url_for('assessment.view_marks', assessment_id=assessment_id))
-#End
 
 
 
 
-#Subject Wise Assessment Details if monthly it also shows its 3 quizzes along with it
-@assessment_bp.route('/view_assessment_details/<int:subject_id>')
+# Subject Wise Assessment Details API
+
+@assessment_bp.route('/api/view_assessment_details/<int:subject_id>')
 @auth.login_required('admin')
 def view_assessment_details(subject_id):
-    """Fetch and display assessment details for a given subject."""
+    """Fetch and return assessment details for a given subject."""
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
-
 
     cursor.execute("""
         SELECT a.assessment_id, a.total_marks, am.Marks_Acheived, a.sequence, s.subject_name, a.created_at
@@ -363,10 +343,10 @@ def view_assessment_details(subject_id):
                 if quiz['monthly_assessment_id'] in data['assessments']:
                     record['quizzes'][f'Quiz{quiz["quiz_number"]}'] = quiz['marks_achieved']
 
-    return render_template('view_assessment_details.html',
-                           subject_id=subject_id,
-                           processed_data=processed_data)
-@assessment_bp.route('/unmarked_assessments')
+    return jsonify({'subject_id': subject_id, 'assessments': processed_data})
+
+
+@assessment_bp.route('/api/unmarked_assessments')
 @auth.login_required('teacher')
 def unmarked_assessments():
     teacherid = session['username']
@@ -374,14 +354,11 @@ def unmarked_assessments():
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
-
-    # Get campus ID of the teacher
     cursor.execute("""
         SELECT campusid FROM Teachers WHERE teacherid = %s
     """, (teacherid,))
     campusid = cursor.fetchone()['campusid']
 
-    # Retrieve unmarked assessments within the teacher's campus
     cursor.execute("""
         SELECT a.assessment_id, s.subject_name, a.assessment_type, a.sequence
         FROM Assessments a
@@ -395,7 +372,6 @@ def unmarked_assessments():
 
     assessments = cursor.fetchall()
 
-    # Calculate the display sequence number
     for assessment in assessments:
         if assessment['assessment_type'] == 'Monthly':
             assessment['sequence_number'] = assessment['sequence'] - 99
@@ -405,10 +381,10 @@ def unmarked_assessments():
     cursor.close()
     conn.close()
 
-    return render_template('unmarked_assessment.html', assessments=assessments)
+    return jsonify({'unmarked_assessments': assessments})
 
-#List of Unmarked and Marked Assessment for Teacher dashboard
-@assessment_bp.route('/marked_assessments')
+
+@assessment_bp.route('/api/marked_assessments')
 @auth.login_required('teacher')
 def marked_assessments():
     teacherid = session['username']
@@ -442,11 +418,10 @@ def marked_assessments():
     cursor.close()
     conn.close()
 
-    return render_template('marked_assessment.html', assessments=assessments)
+    return jsonify({'marked_assessments': assessments})
 
 
-#List of Unmarked and Marked Quizzes for Teacher dashboard
-@assessment_bp.route('/unmarked_quizzes')
+@assessment_bp.route('/api/unmarked_quizzes', methods=['GET'])
 @auth.login_required('teacher')
 def unmarked_quizzes():
     teacherid = session['username']
@@ -454,8 +429,6 @@ def unmarked_quizzes():
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
-
-    # Retrieve unmarked quizzes for the teacher
     cursor.execute("""
         SELECT q.quiz_id, s.subject_name, a.assessment_type, q.quiz_number, a.sequence AS monthly_sequence
         FROM quizzes q
@@ -469,7 +442,6 @@ def unmarked_quizzes():
 
     quizzes = cursor.fetchall()
 
-    # Calculate the display monthly number
     for quiz in quizzes:
         if quiz['monthly_sequence'] is not None:
             if quiz['assessment_type'] == 'Monthly':
@@ -477,14 +449,15 @@ def unmarked_quizzes():
             else:
                 quiz['monthly_number'] = quiz['monthly_sequence']
         else:
-            quiz['monthly_number'] = 'Unknown'  # Handle case where sequence is None
+            quiz['monthly_number'] = 'Unknown'
 
     cursor.close()
     conn.close()
 
-    return render_template('unmarked_quizzes.html', quizzes=quizzes)
+    return jsonify(quizzes)
 
-@assessment_bp.route('/marked_quizzes')
+
+@assessment_bp.route('/api/marked_quizzes', methods=['GET'])
 @auth.login_required('teacher')
 def marked_quizzes():
     teacherid = session['username']
@@ -492,7 +465,6 @@ def marked_quizzes():
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
-    # Retrieve the marked quizzes for the teacher
     cursor.execute("""
         SELECT q.quiz_id, s.subject_name, a.assessment_type, q.quiz_number, a.sequence AS monthly_sequence
         FROM quizzes q
@@ -506,7 +478,6 @@ def marked_quizzes():
 
     quizzes = cursor.fetchall()
 
-    # Calculate the display monthly number
     for quiz in quizzes:
         if quiz['monthly_sequence'] is not None:
             if quiz['assessment_type'] == 'Monthly':
@@ -514,47 +485,50 @@ def marked_quizzes():
             else:
                 quiz['monthly_number'] = quiz['monthly_sequence']
         else:
-            quiz['monthly_number'] = 'Unknown'  # Handle case where sequence is None
+            quiz['monthly_number'] = 'Unknown'
 
     cursor.close()
     conn.close()
 
-    return render_template('marked_quizzes.html', quizzes=quizzes)
-#end
+    return jsonify(quizzes)
 
-#Enter Assessment Marks For Teacher
-@assessment_bp.route('/enter_marks/<int:assessment_id>', methods=['GET', 'POST'])
+
+@assessment_bp.route('/api/enter_marks/<int:assessment_id>', methods=['POST'])
 @auth.login_required('teacher')
 def enter_marks(assessment_id):
-    if request.method == 'POST':
-        marks = request.form.getlist('marks')
-        rfid_list = request.form.getlist('rfid')
-        total_marks = request.form.get('total_marks')
-
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-
-        for rfid, mark in zip(rfid_list, marks):
-            mark = float(mark) if mark else 0
-            cursor.execute("""
-                INSERT INTO assessments_marks (rfid, assessment_id, total_marks, Marks_Acheived)
-                VALUES (%s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE 
-                total_marks = VALUES(total_marks),
-                Marks_Acheived = VALUES(Marks_Acheived)
-            """, (rfid, assessment_id, total_marks, mark))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return redirect(url_for('unmarked_assessments'))
+    data = request.get_json()
+    marks = data.get('marks', [])
+    rfid_list = data.get('rfid', [])
+    total_marks = data.get('total_marks')
 
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
+    for rfid, mark in zip(rfid_list, marks):
+        mark = float(mark) if mark else 0
+        cursor.execute("""
+            INSERT INTO assessments_marks (rfid, assessment_id, total_marks, Marks_Acheived)
+            VALUES (%s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+            total_marks = VALUES(total_marks),
+            Marks_Acheived = VALUES(Marks_Acheived)
+        """, (rfid, assessment_id, total_marks, mark))
 
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': 'Marks entered successfully'}), 200
+
+
+@assessment_bp.route('/api/students_for_assessment/<int:assessment_id>', methods=['GET'])
+@auth.login_required('teacher')
+def students_for_assessment(assessment_id):
     teacherid = session['username']
+
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT campusid FROM Teachers WHERE teacherid = %s", (teacherid,))
     campusid = cursor.fetchone()['campusid']
 
@@ -573,40 +547,46 @@ def enter_marks(assessment_id):
     cursor.close()
     conn.close()
 
-    return render_template('enter_marks.html', students=students, assessment_id=assessment_id)
+    return jsonify(students)
 
 
-#Enter Quiz Marks For Teacher
-@assessment_bp.route('/enter_quiz_marks/<int:quiz_id>', methods=['GET', 'POST'])
+from flask import jsonify
+
+
+@assessment_bp.route('/api/enter_quiz_marks/<int:quiz_id>', methods=['POST'])
 @auth.login_required('teacher')
 def enter_quiz_marks(quiz_id):
-    if request.method == 'POST':
-        marks = request.form.getlist('marks')
-        rfid_list = request.form.getlist('rfid')
-        total_marks = request.form.get('total_marks')
-
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor(dictionary=True)
-
-        for rfid, mark in zip(rfid_list, marks):
-            mark = float(mark) if mark else 0
-            cursor.execute("""
-                INSERT INTO quiz_marks (rfid, quiz_id, marks_achieved)
-                VALUES (%s, %s, %s)
-                ON DUPLICATE KEY UPDATE 
-                marks_achieved = VALUES(marks_achieved)
-            """, (rfid, quiz_id, mark))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return redirect(url_for('unmarked_quizzes'))
+    data = request.get_json()
+    marks = data.get('marks', [])
+    rfid_list = data.get('rfid', [])
 
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
+    for rfid, mark in zip(rfid_list, marks):
+        mark = float(mark) if mark else 0
+        cursor.execute("""
+            INSERT INTO quiz_marks (rfid, quiz_id, marks_achieved)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+            marks_achieved = VALUES(marks_achieved)
+        """, (rfid, quiz_id, mark))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': 'Quiz marks entered successfully'}), 200
+
+
+@assessment_bp.route('/api/students_for_quiz/<int:quiz_id>', methods=['GET'])
+@auth.login_required('teacher')
+def students_for_quiz(quiz_id):
     teacherid = session['username']
+
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT campusid FROM Teachers WHERE teacherid = %s", (teacherid,))
     campusid = cursor.fetchone()['campusid']
 
@@ -626,79 +606,62 @@ def enter_quiz_marks(quiz_id):
     cursor.close()
     conn.close()
 
-    return render_template('enter_quiz_marks.html', students=students, quiz_id=quiz_id)
+    return jsonify(students)
 
 
-
-
-
-# Upload Exam by teacher/admin
-@assessment_bp.route('/upload_exam/<int:campus_id>', methods=['GET', 'POST'])
+@assessment_bp.route('/api/upload_exam/<int:campus_id>', methods=['POST'])
 @auth.login_required('admin')
 def upload_exam(campus_id):
-    """Upload an exam with a PDF file and scheduled start & end time."""
+    data = request.form
+    exam_pdf = request.files.get('exam_pdf')
 
-    if request.method == 'POST':
-        subject_id = request.form.get('subject_id')
-        start_datetime = request.form.get('start_time')
-        end_datetime = request.form.get('end_time')
-        exam_pdf = request.files.get('exam_pdf')
+    if not all([data.get('subject_id'), data.get('start_time'), data.get('end_time'), exam_pdf]):
+        return jsonify({'error': 'All fields are required!'}), 400
 
-        if not subject_id or not start_datetime or not end_datetime or not exam_pdf:
-            flash('All fields are required!', 'danger')
-            return redirect(request.url)
+    pdf_filename = secure_filename(exam_pdf.filename)
+    pdf_folder = os.path.join('../static', 'pdfs')
+    os.makedirs(pdf_folder, exist_ok=True)
+    pdf_path = os.path.join(pdf_folder, pdf_filename)
+    exam_pdf.save(pdf_path)
 
-        # Save the uploaded PDF
-        pdf_filename = secure_filename(exam_pdf.filename)
-        pdf_folder = os.path.join('static', 'pdfs')
-        os.makedirs(pdf_folder, exist_ok=True)
-        pdf_path = os.path.join(pdf_folder, pdf_filename)
-        exam_pdf.save(pdf_path)
+    pst = pytz.timezone('Asia/Karachi')
+    gmt = pytz.timezone('GMT')
 
-        # Convert times from Pakistan Standard Time (PST) to GMT
-        pst = pytz.timezone('Asia/Karachi')
-        gmt = pytz.timezone('GMT')
+    start_time = pst.localize(datetime.strptime(data['start_time'], '%Y-%m-%dT%H:%M')).astimezone(gmt)
+    end_time = pst.localize(datetime.strptime(data['end_time'], '%Y-%m-%dT%H:%M')).astimezone(gmt)
 
-        start_time_obj = pst.localize(datetime.strptime(start_datetime, '%Y-%m-%dT%H:%M'))
-        end_time_obj = pst.localize(datetime.strptime(end_datetime, '%Y-%m-%dT%H:%M'))
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO Exams (Subject_id, Exam_PDF, Start_Time, End_Time)
+        VALUES (%s, %s, %s, %s)
+    """, (data['subject_id'], f'pdfs/{pdf_filename}', start_time, end_time))
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-        start_time_gmt = start_time_obj.astimezone(gmt)
-        end_time_gmt = end_time_obj.astimezone(gmt)
+    return jsonify({'message': 'Exam uploaded successfully!'}), 200
 
-        # Insert into database
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO Exams (Subject_id, Exam_PDF, Start_Time, End_Time)
-            VALUES (%s, %s, %s, %s)
-        """, (subject_id, f'pdfs/{pdf_filename}', start_time_gmt, end_time_gmt))
-        conn.commit()
-        cursor.close()
-        conn.close()
 
-        flash('Exam uploaded successfully!', 'success')
-        return redirect(url_for('exam.upload_exam', campus_id=campus_id))
-
-    # Fetch subjects
+@assessment_bp.route('/api/subjects_for_exam/<int:campus_id>', methods=['GET'])
+@auth.login_required('admin')
+def subjects_for_exam(campus_id):
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT Subject_id, Subject_Name, year FROM Subjects WHERE campusid = %s
-    """, (campus_id,))
+    cursor.execute("SELECT Subject_id, Subject_Name, year FROM Subjects WHERE campusid = %s", (campus_id,))
     subjects = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    return render_template('upload_exam.html', subjects=subjects, campus_id=campus_id)
+    return jsonify(subjects)
 
 
 # Exam Submission by students it can be assignment too
-@assessment_bp.route('/exam_submission/<int:exam_id>', methods=['GET', 'POST'])
+@assessment_bp.route('/api/exam_submission/<int:exam_id>', methods=['GET'])
 @auth.login_required('student')
 def exam_submission(exam_id):
-    """Handle exam submission and solution uploads."""
+    """Fetch exam details for student submission."""
 
-    # Fetch exam details
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
@@ -709,78 +672,61 @@ def exam_submission(exam_id):
     if not exam_data:
         cursor.close()
         conn.close()
-        return "Exam not found", 404
+        return jsonify({"error": "Exam not found"}), 404
 
     # Adjust end time by 5 hours
     exam_end_time = exam_data['End_Time'] + timedelta(hours=5)
 
-    if request.method == 'POST':
-        solution = request.files.get('solution')
-
-        if solution and solution.filename.endswith('.pdf'):
-            filename = secure_filename(solution.filename)
-            solution_folder = os.path.join('static', 'solutions')
-            os.makedirs(solution_folder, exist_ok=True)
-            save_path = os.path.join(solution_folder, filename)
-            solution.save(save_path)
-
-            # Insert submission details
-            cursor.execute("""
-                INSERT INTO Exam_Submissions (Exam_ID, RFID, Solution_PDF, Submission_Time)
-                VALUES (%s, %s, %s, NOW())
-            """, (exam_id, session['rfid'], filename))
-            conn.commit()
-
-            cursor.close()
-            conn.close()
-            return redirect(url_for('exam.exam_submission', exam_id=exam_id))
-
     cursor.close()
     conn.close()
 
-    return render_template('exam_submission.html',
-                           exam_pdf=exam_data['Exam_PDF'],
-                           exam_start_time=exam_data['Start_Time'],
-                           exam_end_time=exam_end_time,
-                           exam_id=exam_id)
+    return jsonify({
+        "exam_pdf": url_for('static', filename=exam_data['Exam_PDF'], _external=True),
+        "exam_start_time": exam_data['Start_Time'].isoformat(),
+        "exam_end_time": exam_end_time.isoformat(),
+        "exam_id": exam_id
+    }), 200
 
 
 # Submission Success Page
-@assessment_bp.route('/submission_success')
+@assessment_bp.route('/api/submission_success')
 def submission_success():
-    """Display submission success message."""
-    return render_template('submission_success.html')
+    """Return a JSON response indicating a successful submission."""
+    return jsonify({"message": "Submission successful!"}), 200
 
 
 # Submit Solution by students
-@assessment_bp.route('/submit_solution/<int:exam_id>', methods=['POST'])
+@assessment_bp.route('/api/submit_solution/<int:exam_id>', methods=['POST'])
 @auth.login_required('student')
 def submit_solution(exam_id):
-    """Allow students to submit solutions for an exam."""
+    """Allow students to submit solutions for an exam via API."""
 
     if 'rfid' not in session:
-        return redirect(url_for('login'))
+        return jsonify({"error": "Unauthorized"}), 401
 
     solution = request.files.get('solution')
 
-    if solution and solution.filename.endswith('.pdf'):
-        filename = secure_filename(solution.filename)
-        solution_folder = os.path.join('static', 'solutions')
-        os.makedirs(solution_folder, exist_ok=True)
-        save_path = os.path.join(solution_folder, filename)
-        solution.save(save_path)
+    if not solution or not solution.filename.endswith('.pdf'):
+        return jsonify({"error": "Invalid file format. Please upload a PDF."}), 400
 
-        # Insert into database
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO Exam_Submissions (Exam_ID, RFID, Solution_PDF, Submission_Time)
-            VALUES (%s, %s, %s, NOW())
-        """, (exam_id, session['rfid'], filename))
-        conn.commit()
-        cursor.close()
-        conn.close()
+    filename = f"{session['rfid']}_{secure_filename(solution.filename)}"
+    solution_folder = os.path.join('static', 'solutions')
+    os.makedirs(solution_folder, exist_ok=True)
+    save_path = os.path.join(solution_folder, filename)
+    solution.save(save_path)
 
-        return redirect(url_for('exam.submission_success'))
+    # Insert into database
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO Exam_Submissions (Exam_ID, RFID, Solution_PDF, Submission_Time)
+        VALUES (%s, %s, %s, NOW())
+    """, (exam_id, session['rfid'], f'solutions/{filename}'))
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-    return "Invalid file format. Please upload a PDF.", 400
+    return jsonify({
+        "message": "Solution submitted successfully!",
+        "solution_pdf": url_for('static', filename=f'solutions/{filename}', _external=True)
+    }), 201

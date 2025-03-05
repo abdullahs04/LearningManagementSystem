@@ -1,13 +1,14 @@
 import mysql.connector
-from database import DB_CONFIG
-from auth import Auth
-from flask import Blueprint, request, render_template, flash, redirect, url_for, session
+from src.database import DB_CONFIG
+from src.auth import Auth
+from flask import Blueprint, request, render_template,  jsonify
 from werkzeug.utils import secure_filename
 import os
-from datetime import datetime
+
+from flask import current_app
 import mysql.connector
-from app import app
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+
 
 
 auth = Auth()
@@ -19,12 +20,9 @@ def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
 #to manage student fine campus wise
-@admin_bp.route('/list_and_update_fine/<int:campus_id>')
+@admin_bp.route('/api/list_and_update_fine/<int:campus_id>', methods=['GET'])
 @auth.login_required('admin')
 def list_and_update_fine(campus_id):
-    if not campus_id:
-        return 'Unauthorized', 403
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -40,43 +38,43 @@ def list_and_update_fine(campus_id):
     cursor.close()
     conn.close()
 
-    return render_template('update_fine.html', students=students, campus_id=campus_id)
+    return {"students": students, "campus_id": campus_id}
 
-@admin_bp.route('/update_student_fines/<int:campus_id>', methods=['POST'])
+
+@admin_bp.route('/api/update_student_fines/<int:campus_id>', methods=['POST'])
 @auth.login_required('admin')
 def update_student_fines(campus_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    for key, value in request.form.items():
-        if key.startswith('fine_'):
-            student_id = key.split('_')[1]
-            try:
-                fine_adjustment = int(value)
-            except ValueError:
-                flash(f"Invalid fine adjustment for student {student_id}")
-                continue
+    try:
+        for key, value in request.json.items():
+            if key.startswith('fine_'):
+                student_id = key.split('_')[1]
+                try:
+                    fine_adjustment = int(value)
+                except ValueError:
+                    return {"error": f"Invalid fine adjustment for student {student_id}"}, 400
 
-            update_query = '''
-                UPDATE Students SET Fine = Fine + %s WHERE rfid = %s AND campusid = %s
-            '''
-            cursor.execute(update_query, (fine_adjustment, student_id, campus_id))
+                update_query = '''
+                    UPDATE Students SET Fine = Fine + %s WHERE rfid = %s AND campusid = %s
+                '''
+                cursor.execute(update_query, (fine_adjustment, student_id, campus_id))
 
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash('Fines updated successfully!')
-    return redirect(url_for('campus.list_and_update_fine', campus_id=campus_id))
+        conn.commit()
+        return {"message": "Fines updated successfully!"}, 200
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}, 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 #To manage student fees campus wise
-@admin_bp.route('/list_and_update_fees/<int:campus_id>')
+@admin_bp.route('/api/list_and_update_fees/<int:campus_id>', methods=['GET'])
 @auth.login_required('admin')
 def list_and_update_fees(campus_id):
-    if not campus_id:
-        return 'Unauthorized', 403
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -92,42 +90,42 @@ def list_and_update_fees(campus_id):
     cursor.close()
     conn.close()
 
-    return render_template('students_fees.html', students=students, campus_id=campus_id)
+    return {"students": students, "campus_id": campus_id}
 
-@admin_bp.route('/update_student_fees/<int:campus_id>', methods=['POST'])
+
+@admin_bp.route('/api/update_student_fees/<int:campus_id>', methods=['POST'])
 @auth.login_required('admin')
 def update_student_fees(campus_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    for key, value in request.form.items():
-        if key.startswith('fees_'):
-            student_id = key.split('_')[1]
-            try:
-                new_fees = int(value)
-            except ValueError:
-                flash(f"Invalid fee amount for student {student_id}")
-                continue
+    try:
+        for key, value in request.json.items():
+            if key.startswith('fees_'):
+                student_id = key.split('_')[1]
+                try:
+                    new_fees = int(value)
+                except ValueError:
+                    return {"error": f"Invalid fee amount for student {student_id}"}, 400
 
-            update_query = '''
-                UPDATE Students SET FeeAmount = %s WHERE rfid = %s AND campusid = %s
-            '''
-            cursor.execute(update_query, (new_fees, student_id, campus_id))
+                update_query = '''
+                    UPDATE Students SET FeeAmount = %s WHERE rfid = %s AND campusid = %s
+                '''
+                cursor.execute(update_query, (new_fees, student_id, campus_id))
 
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    flash('Fees updated successfully!')
-    return redirect(url_for('campus.list_and_update_fees', campus_id=campus_id))
+        conn.commit()
+        return {"message": "Fees updated successfully!"}, 200
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}, 500
+    finally:
+        cursor.close()
+        conn.close()
 
 #To view attendance of students campus wise
-@admin_bp.route('/attendance_students/<int:campus_id>')
+@admin_bp.route('/api/attendance_students/<int:campus_id>', methods=['GET'])
 @auth.login_required('admin')
 def attendance_students(campus_id):
-    if not campus_id:
-        return 'Unauthorized', 403
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -147,22 +145,18 @@ def attendance_students(campus_id):
     cursor.close()
     conn.close()
 
-    return render_template(
-        'attendance_students.html',
-        students=students,
-        total_present=total_present,
-        total_absent=total_absent,
-        total_no_status=total_no_status
-    )
+    return {
+        "students": students,
+        "total_present": total_present,
+        "total_absent": total_absent,
+        "total_no_status": total_no_status
+    }
 
 
 #To view attendance of employees check in checkout campus wise
-@admin_bp.route('/campus/<int:campus_id>/attendance_employees')
+@admin_bp.route('/api/campus/<int:campus_id>/attendance_employees', methods=['GET'])
 @auth.login_required('admin')
 def attendance_employees(campus_id):
-    if not campus_id:
-        return 'Unauthorized', 403
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -196,54 +190,51 @@ def attendance_employees(campus_id):
     cursor.close()
     conn.close()
 
-    return render_template(
-        'attendance_employees.html',
-        employees=employees,
-        total_present=total_present,
-        total_absent=total_absent,
-        total_no_status=total_no_status
-    )
-#To Register New Students
-@admin_bp.route('/register_students', methods=['GET'])
+    return jsonify({
+        'employees': employees,
+        'total_present': total_present,
+        'total_absent': total_absent,
+        'total_no_status': total_no_status
+    })
+
+
+# ✅ Student Registration API
+@admin_bp.route('/api/register_students', methods=['POST'])
 @auth.login_required('admin')
 def register_student():
-    if request.method == 'POST':
-        rfid = request.form['rfid']
-        student_name = request.form['student_name']
-        picture = request.files['picture']
-        password = request.form['password']
-        student_id = request.form['student_id']
-        absentee_id = request.form['absentee_id']
-        year = request.form['year']
-        campus_id = request.form['campus_id']
+    data = request.form
+    picture = request.files.get('picture')
 
-        picture_path = None
+    if not all([data.get('rfid'), data.get('student_name'), data.get('password'), data.get('student_id'),
+                data.get('absentee_id'), data.get('year'), data.get('campus_id')]):
+        return jsonify({'error': 'Missing required fields'}), 400
 
-        if picture:
-            filename = secure_filename(picture.filename)
-            picture_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            picture.save(picture_path)
-            relative_path = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
+    relative_path = None
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+    if picture and picture.filename:
+        filename = secure_filename(picture.filename)
+        picture_path = os.path.join('uploads', filename)  # Adjust folder
+        picture.save(picture_path)
+        relative_path = f"/uploads/{filename}"
 
-        try:
-            cursor.execute("""
-                INSERT INTO Students (RFID, student_name, picture_url, Password, StudentID, AbsenteeID, year, campusid)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (rfid, student_name, relative_path, password, student_id, absentee_id, year, campus_id))
-            conn.commit()
-            flash('Student registered successfully!', 'success')
-            return redirect(url_for('register_student'))
-        except Exception as e:
-            conn.rollback()
-            flash('Error registering student: ' + str(e), 'danger')
-        finally:
-            cursor.close()
-            conn.close()
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-    return render_template('register_student.html')
+    try:
+        cursor.execute("""
+            INSERT INTO Students (RFID, student_name, picture_url, Password, StudentID, AbsenteeID, year, campusid)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+        data['rfid'], data['student_name'], relative_path, data['password'], data['student_id'], data['absentee_id'],
+        data['year'], data['campus_id']))
+        conn.commit()
+        return jsonify({'message': 'Student registered successfully'}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 # it needs to be corrected after link with attendance.py
@@ -283,7 +274,8 @@ def register_student():
 #     return render_template('absentees_list.html', absentees=absentees,
 #                            selected_date=date_time.date().strftime('%Y-%m-%d'))
 
-@admin_bp.route('/register_students', methods=['GET'])
-@auth.login_required('admin')
-def register_students():
-    return render_template('register_student.html')
+# @admin_bp.route('/register_students', methods=['GET'])
+# @auth.login_required('admin')
+# def register_students():
+#     return render_template('register_student.html')
+

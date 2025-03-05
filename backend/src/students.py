@@ -1,24 +1,26 @@
-from flask import Blueprint, session, redirect, url_for, render_template
+from flask import Blueprint, session, render_template, request,jsonify
 import mysql.connector
-from database import DB_CONFIG
+from src.database import DB_CONFIG
 from datetime import datetime
-from auth import Auth
+import os
+from src.auth import Auth
+from werkzeug.utils import secure_filename
 
 auth = Auth()
-
 student_bp = Blueprint('student', __name__)
 
-@student_bp.route('/dashboard')
+
+#Student Dashboard
+@student_bp.route('/api/dashboard', methods=['GET'])
 @auth.login_required('student')
 def student_dashboard():
     if 'rfid' not in session:
-        return redirect(url_for('auth.login'))
+        return jsonify({"error": "Unauthorized"}), 401
 
     rfid = session['rfid']
     conn = mysql.connector.connect(**DB_CONFIG)
     cursor = conn.cursor(dictionary=True)
 
-    # Fetch student data
     cursor.execute("""
         SELECT student_name, picture_url, DaysAttended, TotalDays 
         FROM Students 
@@ -29,14 +31,13 @@ def student_dashboard():
     if not student_data:
         cursor.close()
         conn.close()
-        return redirect(url_for('auth.login'))
+        return jsonify({"error": "Student not found"}), 404
 
-    student_name = student_data['student_name']
-    image_url = student_data['picture_url']
-    days_attended = student_data['DaysAttended']
-    total_days = student_data['TotalDays']
+    general_attendance_percentage = (
+        (student_data['DaysAttended'] / student_data['TotalDays']) * 100
+        if student_data['TotalDays'] > 0 else 0
+    )
 
-    # Fetch subject attendance and exam availability
     cursor.execute("""
         SELECT 
             s.subject_name, 
@@ -53,10 +54,10 @@ def student_dashboard():
     """, (rfid,))
     subject_attendance_data = cursor.fetchall()
 
-    now = datetime.now()
     subject_attendance = []
     processed_subjects = set()
 
+    now = datetime.now()
     for row in subject_attendance_data:
         subject_id = row['subject_id']
         if subject_id not in processed_subjects:
@@ -78,37 +79,76 @@ def student_dashboard():
                 'subject_id': subject_id
             })
 
-    # Calculate general attendance percentage
-    general_attendance_percentage = (days_attended / total_days) * 100 if total_days > 0 else 0
-
-    # Fetch assessment types and their scores
     cursor.execute("""
         SELECT DISTINCT a.assessment_type
         FROM Assessments a
         JOIN assessments_marks am ON a.assessment_id = am.assessment_id
         WHERE am.rfid = %s
     """, (rfid,))
-    assessment_types = cursor.fetchall()
-
-    # Ensure all possible assessment types are displayed
-    all_assessment_types = ['Monthly', 'Class', 'Mid', 'Final', 'Send Up', 'Mocks', 'Finals', 'Others', 'Test Session']
-    assessment_types_dict = {type_['assessment_type'] for type_ in assessment_types}
-
-    assessment_types_to_display = [
-        type_ for type_ in all_assessment_types if type_ in assessment_types_dict
-    ]
+    assessment_types = [row['assessment_type'] for row in cursor.fetchall()]
 
     cursor.close()
     conn.close()
 
-    return render_template(
-        'student_dashboard.html',
-        student_name=student_name,
-        image_url=image_url,
-        subject_attendance=subject_attendance,
-        general_attendance_percentage=general_attendance_percentage,
-        assessment_types=assessment_types_to_display
-    )
+    return jsonify({
+        "student_name": student_data['student_name'],
+        "image_url": student_data['picture_url'],
+        "subject_attendance": subject_attendance,
+        "general_attendance_percentage": general_attendance_percentage,
+        "assessment_types": assessment_types
+    })
+
+@student_bp.route('/api/view_students/<int:campus_id>', methods=['GET'])
+@auth.login_required('admin')
+def view_students(campus_id):
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cursor = conn.cursor(dictionary=True)
+
+    query = '''
+        SELECT Student_Name AS student_name, rfid AS username, Year
+        FROM Students
+        WHERE CampusID = %s 
+        ORDER BY Student_Name, Year
+    '''
+    cursor.execute(query, (campus_id,))
+    students = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(students)
+
+@student_bp.route('/api/upload_picture', methods=['POST'])
+@auth.login_required('student')
+def upload_picture():
+    if 'picture' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    picture = request.files['picture']
+    rfid = request.form['rfid']
+
+    if picture:
+        filename = secure_filename(picture.filename)
+        upload_folder = 'static/images'
+        picture_path = os.path.join(upload_folder, filename)
+        picture.save(picture_path)
+
+        relative_path = f"/{upload_folder}/{filename}"
+
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("UPDATE Students SET picture_url = %s WHERE rfid = %s", (relative_path, rfid))
+            conn.commit()
+            return jsonify({'message': 'Picture uploaded successfully', 'picture_url': relative_path}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'error': str(e)}), 500
+        finally:
+            cursor.close()
+            conn.close()
+
 
 
 # Temporarily to make it active as other routes called in it are not ready yet

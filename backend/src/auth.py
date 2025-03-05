@@ -1,7 +1,7 @@
 from functools import wraps
 import mysql.connector
-from flask import Blueprint, session, redirect, url_for, request, render_template
-from database import DB_CONFIG
+from flask import Blueprint, session, redirect, url_for, request,jsonify
+from src.database import DB_CONFIG
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -43,33 +43,31 @@ class Auth:
         conn.close()
         return None, None
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/api/login', methods=['POST'])
 def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    role, user = Auth.authenticate_user(username, password)
+    if role:
+        session['username'] = username
+        session['role'] = role
 
-        role, user = Auth.authenticate_user(username, password)
-        if role:
-            session['username'] = username
-            session['role'] = role
+        response = {'role': role}
+        if role == 'student':
+            session['rfid'] = user['RFID']
+            response['rfid'] = user['RFID']
 
-            if role == 'student':
-                session['rfid'] = user['RFID']
-                return redirect(url_for('student.student_dashboard'))
+        elif role == 'campus_admin':
+            session['campus_id'] = user['campusid']
+            response['campus_id'] = user['campusid']
 
-            if role == 'campus_admin':
-                session['campus_id'] = user['campusid']
-                return redirect(url_for('campus_admin_dashboard'))
+        return jsonify(response), 200
 
-            return redirect(url_for('index') if role == 'admin' else url_for(f'{role}_dashboard'))
+    return jsonify({'error': 'Invalid credentials'}), 401
 
-        return 'Invalid credentials', 401
-
-    return render_template('login.html')
-
-@auth_bp.route('/logout')
+@auth_bp.route('/api/logout', methods=['POST'])
 def logout():
     session.clear()
-    return redirect(url_for('auth.login'))
+    return jsonify({'message': 'Logged out successfully'}), 200
