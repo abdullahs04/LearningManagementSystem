@@ -1,11 +1,10 @@
 from flask import Flask,render_template, request
-from auth import auth_bp
-from students import student_bp
-from assessment import assessment_bp
-from subjects import subject_bp
-from admin import admin_bp
-from database import Database
-from auth import Auth
+from src.auth import auth_bp
+from src.students import student_bp
+from src.assessment import assessment_bp
+from src.subject import subject_bp
+from src.admin import admin_bp
+from src.auth import Auth
 auth = Auth()
 
 app = Flask(__name__)
@@ -17,7 +16,7 @@ app.register_blueprint(student_bp, url_prefix='/student')
 app.register_blueprint(assessment_bp, url_prefix='/assessment')
 app.register_blueprint(subject_bp, url_prefix='/subject')
 app.register_blueprint(admin_bp, url_prefix='/admin')
-
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 
 @app.route('/', methods=['GET', 'POST'])
