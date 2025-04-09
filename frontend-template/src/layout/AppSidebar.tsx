@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
-// Assume these icons are imported from an icon library
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -16,7 +15,38 @@ import {
   UserCircleIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
+
+// TODO add logic to check which type of user logged in and show the menu accordingly
+const UserLoggedInIs: "admin" | "teacher" | "student" = "teacher"; // or "user" or "teacher" or "student"
+
+// TODO: the path will be decided later on how to implement,
+//  the course icon and name will be set by the teacher or admin TO BE DECIDED
+
+const StudentCourses = [
+  {
+    name: "Course 1",
+    icon: <UserCircleIcon />,
+    path: "/course-1",
+  },
+  {
+    name: "Course 1",
+    icon: <UserCircleIcon />,
+    path: "/course-1",
+  },
+]
+
+const TeacherCourses = [
+  {
+    name: "Course 1",
+    icon: <UserCircleIcon />,
+    path: "/course-1",
+  },
+  {
+    name: "Course 1",
+    icon: <UserCircleIcon />,
+    path: "/course-1",
+  },
+]
 
 type NavItem = {
   name: string;
@@ -25,41 +55,190 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-const navItems: NavItem[] = [
-  {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
-];
+// Define menu items based on user role
+const getNavItems = (): NavItem[] => {
+  if (UserLoggedInIs === "admin") {
+    return [
+      {
+        icon: <GridIcon />,
+        name: "Overview",
+        path: "/",
+      },
+  
+      {
+        icon: <UserCircleIcon />,
+        name: "User Profile",
+        path: "/profile",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Student Information System",
+        path: "/students",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Staff Management",
+        path: "/staff",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Classroom & Subject Management",
+        path: "/classes",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Gradebook",
+        path: "/grades",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Examinations & Timetable",
+        path: "/exams",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Lesson Plans & Course Materials",
+        path: "/lesson-plans",
+      },
+  
+      // Attendance & Communication
+      {
+        icon: <UserCircleIcon />, 
+        name: "Attendance Tracking",
+        path: "/attendance",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Fee Management",
+        path: "/fees",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Budgeting & Expenses",
+        path: "/budget",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "Transport Management",
+        path: "/transport",
+      },
+  
+      // Reports & Analytics
+      {
+        icon: <UserCircleIcon />, 
+        name: "Performance Analytics",
+        path: "/analytics",
+      },
+  
+      {
+        icon: <UserCircleIcon />, 
+        name: "System Settings",
+        path: "/system-settings",
+      },
+    ];
+  } else if (UserLoggedInIs === "teacher") {
+    return [
+      {
+        icon: <UserCircleIcon />,
+        name: "Overview",
+        path: "/profile",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: "Calendar",
+        path: "/calendar",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: "Time Table",
+        path: "/calendar",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "Courses",
+        subItems: TeacherCourses.map((course) => ({
+          icon: course.icon,
+          name: course.name,
+          path: course.path,
+        })),
+        },
+      {
+        icon: <CalenderIcon />,
+        name: "Grading & Assessment",
+        path: "/calendar",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: "Records",
+        path: "/calendar",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "User Profile",
+        path: "/profile",
+      },
+    ];
+  } else if (UserLoggedInIs === "student") {
+    return [
+      {
+      icon: <UserCircleIcon />,
+      name: "Overview",
+      path: "/profile",
+      },
+      {
+      icon: <UserCircleIcon />,
+      name: "Attendance Record",
+      path: "/profile",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "Calender",
+        path: "/profile",
+      },
+      {
+      icon: <UserCircleIcon />,
+      name: "Courses",
+      subItems: StudentCourses.map((course) => ({
+        icon: course.icon,
+        name: course.name,
+        path: course.path,
+      })),
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "Feedback & Reviews",
+        path: "/profile",
+      },
+      {
+      icon: <UserCircleIcon />,
+      name: "Results & Grades",
+      path: "/profile",
+      },
+      {
+        icon: <UserCircleIcon />,
+        name: "TimeTable",
+        path: "/profile",
+      },
+      {
+      icon: <UserCircleIcon />,
+      name: "User Profile",
+      path: "/profile",
+      },
+    ];
+  }
+  return [];
+};
+
+const navItems: NavItem[] = getNavItems();
 
 const othersItems: NavItem[] = [
   {
@@ -113,7 +292,7 @@ const AppSidebar: React.FC = () => {
 
   useEffect(() => {
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
+    ["main"].forEach((menuType) => {
       const items = menuType === "main" ? navItems : othersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
@@ -342,33 +521,12 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
-                ) : (
-                  <HorizontaLDots className="size-6" />
-                )}
+                
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            <div className="">
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );
