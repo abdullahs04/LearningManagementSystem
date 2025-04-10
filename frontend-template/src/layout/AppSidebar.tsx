@@ -17,7 +17,7 @@ import {
 import { useSidebar } from "../context/SidebarContext";
 
 // TODO add logic to check which type of user logged in and show the menu accordingly
-const UserLoggedInIs: "admin" | "teacher" | "student" = "teacher"; // or "user" or "teacher" or "student"
+const UserLoggedInIs: "admin" | "teacher" | "student" = "student"; // or "user" or "teacher" or "student"
 
 // TODO: the path will be decided later on how to implement,
 //  the course icon and name will be set by the teacher or admin TO BE DECIDED
@@ -192,7 +192,7 @@ const getNavItems = (): NavItem[] => {
       {
       icon: <UserCircleIcon />,
       name: "Overview",
-      path: "/profile",
+      path: "/student-overview",
       },
       {
       icon: <UserCircleIcon />,
@@ -230,7 +230,7 @@ const getNavItems = (): NavItem[] => {
       },
       {
       icon: <UserCircleIcon />,
-      name: "User Profile",
+      name: "Student Profile",
       path: "/profile",
       },
     ];

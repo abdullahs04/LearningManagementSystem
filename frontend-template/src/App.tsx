@@ -20,8 +20,11 @@ import Home from "./pages/Dashboard/Home";
 import Homepage from "./pages/Dashboard/Homepage";
 import LandingPage from "./pages/admin-dashboard/Overview";
 
+// Student Pages
+import StudentOverview from "./pages/student-pages/Overview";
+
 // TODO: this will read from the struct saved
-const someOneLoggedIn = false; 
+const someOneLoggedIn = true;
 
 export default function App() {
   return (
@@ -29,11 +32,9 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Dashboard Layout */}
-            
-            <Route
-              element={someOneLoggedIn ? <AppLayout /> : null }
-            >
+          <Route
+            element={someOneLoggedIn ? <AppLayout /> : null}
+          >
             <Route
               index
               path="/"
@@ -63,7 +64,11 @@ export default function App() {
             {/* Charts */}
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
-            </Route>
+          
+            {/* Student Pages */}
+            <Route path="/student-overview" element={<StudentOverview />} />
+
+          </Route>
 
           {/* Auth Layout */}
           <Route path="/signin" element={<SignIn />} />

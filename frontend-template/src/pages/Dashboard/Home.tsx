@@ -7,7 +7,7 @@ import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 
 export default function Home() {
-  const whoIsLoggedIn = "student"; // Change this value to "teacher" or "admin" to test different views
+  const whoIsLoggedIn = "admin"; // Change this value to "teacher" or "admin" to test different views
 
   return (
     <>
@@ -22,7 +22,7 @@ export default function Home() {
               <EcommerceMetrics />
               <MonthlySalesChart />
             </div>
-            <div className="col-span-12">
+            <div className="col-span-12 space-y-6 xl:col-span-7">
               <StatisticsChart />
             </div>
           </>

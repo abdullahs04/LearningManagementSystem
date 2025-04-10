@@ -13,7 +13,7 @@ export default function UserInfoCard() {
                 First Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Musharof
+                Jalal
               </p>
             </div>
 
@@ -22,7 +22,7 @@ export default function UserInfoCard() {
                 Last Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Chowdhury
+                Ahmed
               </p>
             </div>
 
@@ -31,7 +31,7 @@ export default function UserInfoCard() {
                 Email address
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                randomuser@pimjo.com
+                bscs23134@itu.edu.pk
               </p>
             </div>
 
@@ -40,7 +40,7 @@ export default function UserInfoCard() {
                 Phone
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                +09 363 398 46
+                +92 310 853 6167
               </p>
             </div>
 
@@ -49,7 +49,7 @@ export default function UserInfoCard() {
                 Position
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                Team Manager
+                Front-end Developer
               </p>
             </div>
           </div>
