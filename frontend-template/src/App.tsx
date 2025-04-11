@@ -21,7 +21,11 @@ import Homepage from "./pages/Dashboard/Homepage";
 import LandingPage from "./pages/admin-dashboard/Overview";
 
 // Student Pages
-import StudentOverview from "./pages/student-pages/Overview";
+import StudentOverview from "./pages/student-specific/Overview";
+import TimeTable from "./pages/TimeTable";
+import AttendanceRecords from "./pages/student-specific/AttendanceRecords";
+import Feedback from "./pages/student-specific/Feedback";
+import Grades from "./pages/student-specific/Grades";
 
 // TODO: this will read from the struct saved
 const someOneLoggedIn = true;
@@ -67,6 +71,10 @@ export default function App() {
           
             {/* Student Pages */}
             <Route path="/student-overview" element={<StudentOverview />} />
+            <Route path="/timetable" element={<TimeTable />} />
+            <Route path="/attendance-records" element={<AttendanceRecords />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/grades" element={<Grades />} />
 
           </Route>
 

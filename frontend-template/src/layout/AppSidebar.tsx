@@ -197,12 +197,7 @@ const getNavItems = (): NavItem[] => {
       {
       icon: <UserCircleIcon />,
       name: "Attendance Record",
-      path: "/profile",
-      },
-      {
-        icon: <UserCircleIcon />,
-        name: "Calender",
-        path: "/profile",
+      path: "/attendance-records",
       },
       {
       icon: <UserCircleIcon />,
@@ -216,17 +211,17 @@ const getNavItems = (): NavItem[] => {
       {
         icon: <UserCircleIcon />,
         name: "Feedback & Reviews",
-        path: "/profile",
+        path: "/feedback",
       },
       {
       icon: <UserCircleIcon />,
       name: "Results & Grades",
-      path: "/profile",
+      path: "/grades",
       },
       {
         icon: <UserCircleIcon />,
         name: "TimeTable",
-        path: "/profile",
+        path: "/timetable",
       },
       {
       icon: <UserCircleIcon />,

@@ -68,7 +68,7 @@ export default function UserMetaCard() {
           <form className="flex flex-col items-center">
         <div className="mb-6">
           <div className="w-32 h-32 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-            <img src="/images/user/owner.jpg" alt="Current Profile" />
+            <img src="/images/user/profile.jpg" alt="Current Profile" />
           </div>
         </div>
         <div className="flex flex-col items-center gap-4">
