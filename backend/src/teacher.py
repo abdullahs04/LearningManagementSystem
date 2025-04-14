@@ -8,7 +8,6 @@ import pytz
 import mysql.connector
 from database import Database
 from auth import Auth
-from app import app
 import attendence as rfid_handler
 
 auth = Auth()
@@ -210,7 +209,7 @@ def update_all_attendance():
 
     if not campus_id:
         # Log an error and return a meaningful response if campus_id is not in the session
-        app.logger.error("Campus ID is missing in the session.")
+        # app.logger.error("Campus ID is missing in the session.")
         return "Campus ID is missing!", 400
 
     # Retrieve student RFID and new status from the form for all students
