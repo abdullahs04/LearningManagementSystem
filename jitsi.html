@@ -1,1 +1,93 @@
-git
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Join Classroom Meeting</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .controls {
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 8px;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button.reset {
+      background-color: #f44336;
+    }
+    #roomInfo {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f0f0f0;
+      display: none;
+    }
+    #meet {
+      height: 600px;
+      width: 100%;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Welcome to the Classroom</h2>
+
+  <div class="controls">
+    <input type="text" id="username" placeholder="Enter your name" />
+    <button onclick="joinMeeting()">Join Meeting</button>
+    <button onclick="resetMeeting()" class="reset">Reset Room</button>
+  </div>
+
+  <div id="roomInfo"></div>
+  <div id="meet"></div>
+
+  <script>
+  function joinMeeting() {
+    const userName = document.getElementById('username').value || "Guest";
+
+    // Get existing room ID from localStorage or create a new one
+    let roomId = localStorage.getItem('currentRoomId');
+    if (!roomId) {
+      roomId = "class_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
+      localStorage.setItem('currentRoomId', roomId);
+    }
+
+    // Using HTTPS and port 8443
+    const url = `https://localhost:8443/${roomId}?name=${encodeURIComponent(userName)}`;
+
+    // Show connection info
+    const roomInfo = document.getElementById('roomInfo');
+    roomInfo.innerHTML = `Connecting to room: ${roomId}`;
+    roomInfo.style.display = "block";
+
+    // Create iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.allow = "camera; microphone; fullscreen; display-capture; autoplay";
+    iframe.style.width = "100%";
+    iframe.style.height = "600px";
+    iframe.style.border = "none";
+
+    document.getElementById('meet').innerHTML = '';
+    document.getElementById('meet').appendChild(iframe);
+  }
+
+  function resetMeeting() {
+    localStorage.removeItem('currentRoomId');
+    document.getElementById('roomInfo').style.display = "none";
+    document.getElementById('meet').innerHTML = '';
+    alert('Meeting room reset. Click Join Meeting to create a new room.');
+  }
+  </script>
+</body>
+</html>
