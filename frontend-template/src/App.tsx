@@ -20,9 +20,14 @@ import Home from "./pages/Dashboard/Home";
 import Homepage from "./pages/Dashboard/Homepage";
 import LandingPage from "./pages/admin-dashboard/Overview";
 
+// Professor Pages
+import ProfessorOverview from "./pages/teacher-dashboard/Overview";
+import TimeTableProfessor from "./pages/teacher-dashboard/TimeTable";
+import Grading from "./pages/teacher-dashboard/Grading";
+
 // Student Pages
 import StudentOverview from "./pages/student-specific/Overview";
-import TimeTable from "./pages/TimeTable";
+import TimeTableStudent from "./pages/student-specific/TimeTable";
 import AttendanceRecords from "./pages/student-specific/AttendanceRecords";
 import Feedback from "./pages/student-specific/Feedback";
 import Grades from "./pages/student-specific/Grades";
@@ -69,9 +74,15 @@ export default function App() {
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
           
+            {/* Professor Pages */}
+            <Route path="/professor-overview" element={<ProfessorOverview />} />
+            <Route path="/timetable-professor" element={<TimeTableProfessor />} />
+            <Route path="/grading" element={<Grading />} />
+
+
             {/* Student Pages */}
             <Route path="/student-overview" element={<StudentOverview />} />
-            <Route path="/timetable" element={<TimeTable />} />
+            <Route path="/timetable-student" element={<TimeTableStudent />} />
             <Route path="/attendance-records" element={<AttendanceRecords />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/grades" element={<Grades />} />

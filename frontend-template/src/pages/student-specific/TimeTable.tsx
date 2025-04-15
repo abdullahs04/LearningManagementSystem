@@ -4,7 +4,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { EventInput } from "@fullcalendar/core";
-import PageMeta from "../components/common/PageMeta";
+import PageMeta from "../../components/common/PageMeta";
 
 // TODO ask opinions on grey color and may shify to dark blue
 // TODO update these static events to be get event from the terminal
@@ -16,7 +16,7 @@ interface TimetableEntry extends EventInput {
   };
 }
 
-const TimeTable: React.FC = () => {
+const TimeTableStudent: React.FC = () => {
   const [scheduleItems] = useState<TimetableEntry[]>([
     {
       id: "1",
@@ -283,4 +283,4 @@ const TimeTable: React.FC = () => {
   );
 };
 
-export default TimeTable;
+export default TimeTableStudent;

@@ -17,7 +17,7 @@ import {
 import { useSidebar } from "../context/SidebarContext";
 
 // TODO add logic to check which type of user logged in and show the menu accordingly
-const UserLoggedInIs: "admin" | "teacher" | "student" = "student"; // or "user" or "teacher" or "student"
+const UserLoggedInIs: "admin" | "teacher" | "student" = "teacher"; // or "user" or "teacher" or "student"
 
 // TODO: the path will be decided later on how to implement,
 //  the course icon and name will be set by the teacher or admin TO BE DECIDED
@@ -55,7 +55,7 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-// Define menu items based on user role
+// TODO Define menu items based on user role and also fix the icons
 const getNavItems = (): NavItem[] => {
   if (UserLoggedInIs === "admin") {
     return [
@@ -150,17 +150,12 @@ const getNavItems = (): NavItem[] => {
       {
         icon: <UserCircleIcon />,
         name: "Overview",
-        path: "/profile",
+        path: "/professor-overview",
       },
       {
         icon: <CalenderIcon />,
-        name: "Calendar",
-        path: "/calendar",
-      },
-      {
-        icon: <CalenderIcon />,
-        name: "Time Table",
-        path: "/calendar",
+        name: "TimeTable",
+        path: "/timetable-professor",
       },
       {
         icon: <UserCircleIcon />,
@@ -174,11 +169,16 @@ const getNavItems = (): NavItem[] => {
       {
         icon: <CalenderIcon />,
         name: "Grading & Assessment",
+        path: "/grading",
+      },
+      {
+        icon: <CalenderIcon />,
+        name: "Queries & Feedback",
         path: "/calendar",
       },
       {
         icon: <CalenderIcon />,
-        name: "Records",
+        name: "Results submission",
         path: "/calendar",
       },
       {
@@ -221,7 +221,7 @@ const getNavItems = (): NavItem[] => {
       {
         icon: <UserCircleIcon />,
         name: "TimeTable",
-        path: "/timetable",
+        path: "/timetable-student",
       },
       {
       icon: <UserCircleIcon />,
