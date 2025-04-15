@@ -174,12 +174,12 @@ const getNavItems = (): NavItem[] => {
       {
         icon: <CalenderIcon />,
         name: "Queries & Feedback",
-        path: "/calendar",
+        path: "/queries-and-feedback",
       },
       {
         icon: <CalenderIcon />,
         name: "Results submission",
-        path: "/calendar",
+        path: "/result-submission",
       },
       {
         icon: <UserCircleIcon />,

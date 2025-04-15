@@ -24,6 +24,8 @@ import LandingPage from "./pages/admin-dashboard/Overview";
 import ProfessorOverview from "./pages/teacher-dashboard/Overview";
 import TimeTableProfessor from "./pages/teacher-dashboard/TimeTable";
 import Grading from "./pages/teacher-dashboard/Grading";
+import ResultSubmission from "./pages/teacher-dashboard/ResultSubmission";
+import QueriesAndFeedback from "./pages/teacher-dashboard/QuriesAndFeedback";
 
 // Student Pages
 import StudentOverview from "./pages/student-specific/Overview";
@@ -78,6 +80,8 @@ export default function App() {
             <Route path="/professor-overview" element={<ProfessorOverview />} />
             <Route path="/timetable-professor" element={<TimeTableProfessor />} />
             <Route path="/grading" element={<Grading />} />
+            <Route path="/result-submission" element={<ResultSubmission />} />
+            <Route path="/queries-and-feedback" element={<QueriesAndFeedback />} />
 
 
             {/* Student Pages */}
