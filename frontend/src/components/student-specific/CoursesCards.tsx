@@ -1,15 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, User, Clock } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 
 type CourseCardProps = {
   id: string;
   courseCode: string;
   courseName: string;
   instructor: string;
-  credits: number;
 };
 
-function CourseCard({ id, courseCode, courseName, instructor, credits }: CourseCardProps) {
+function CourseCard({ id, courseCode, courseName, instructor }: CourseCardProps) {
   const navigate = useNavigate();
   const handleClick = () => {
     navigate(`/courses/${id}`);
@@ -41,12 +40,6 @@ function CourseCard({ id, courseCode, courseName, instructor, credits }: CourseC
           <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-800 font-mono text-sm dark:bg-gray-700 dark:text-gray-200">
             {courseCode}
           </span>
-          <div className="flex items-center">
-            <Clock size={16} className="text-gray-500 dark:text-gray-400" />
-            <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-              {credits} {credits === 1 ? "Credit" : "Credits"}
-            </span>
-          </div>
         </div>
         
         <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2 dark:text-white dark:group-hover:text-blue-400">
@@ -80,42 +73,36 @@ export default function CoursesCards() {
       courseCode: "CS101",
       courseName: "Introduction to Computer Science",
       instructor: "Dr. Jane Smith",
-      credits: 3,
     },
     {
       id: "course-2",
       courseCode: "MATH201",
       courseName: "Calculus II",
       instructor: "Prof. John Doe",
-      credits: 4,
     },
     {
       id: "course-3",
       courseCode: "PHY150",
       courseName: "Physics for Engineers",
       instructor: "Dr. Robert Johnson",
-      credits: 4,
     },
     {
       id: "course-4",
       courseCode: "ENG102",
       courseName: "Technical Writing",
       instructor: "Prof. Lisa Brown",
-      credits: 2,
     },
     {
       id: "course-5",
       courseCode: "BIO110",
       courseName: "Introduction to Biology",
       instructor: "Dr. Sarah Williams",
-      credits: 3,
     },
     {
       id: "course-6",
       courseCode: "CHEM200",
       courseName: "Organic Chemistry",
       instructor: "Prof. Michael Chen",
-      credits: 4,
     },
   ];
 

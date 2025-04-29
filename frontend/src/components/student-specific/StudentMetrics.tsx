@@ -4,9 +4,9 @@ export default function StudentMetrics() {
   return (
     <div className="grid grid-cols-2 gap-6">
       <MetricCard title="Current Courses" value="5" />
-      <MetricCard title="Completed Courses" value="12" />
-      <MetricCard title="Total CGPA" value="3.75" />
-      <MetricCard title="Credits Earned" value="45" />
+      <MetricCard title="Average Percentage" value="91 %" />
+      <MetricCard title="Pending Assignments" value="3" />
+      <MetricCard title="Average Attendance" value="45 %" />
     </div>
   );
 }

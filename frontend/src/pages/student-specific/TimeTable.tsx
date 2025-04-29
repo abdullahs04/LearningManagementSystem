@@ -141,7 +141,7 @@ const TimeTableStudent: React.FC = () => {
   ]);
 
   // Get today's schedule items only
-  const todayItems = scheduleItems.filter(item => {
+  const todayItems = scheduleItems.filter((item) => {
     const itemDate = new Date(item.start as number);
     const today = new Date();
     return (
@@ -161,7 +161,9 @@ const TimeTableStudent: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar */}
           <div className="md:w-1/3 lg:w-1/4">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Today's Schedule</h2>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+              Today's Schedule
+            </h2>
             {todayItems.length > 0 ? (
               <div className="space-y-4">
                 {todayItems.map((item) => (
@@ -174,11 +176,19 @@ const TimeTableStudent: React.FC = () => {
                     }}
                   >
                     <div className="flex justify-between items-start">
-                      <h3 className="font-medium text-lg">{item.extendedProps.courseCode}</h3>
+                      <h3 className="font-medium text-lg">
+                        {item.extendedProps.courseCode}
+                      </h3>
                       <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white/20">
-                        {new Date(item.start as number).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(item.start as number).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                         {" - "}
-                        {new Date(item.end as number).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(item.end as number).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                     </div>
                     <p className="mt-1">{item.extendedProps.courseTitle}</p>
@@ -187,7 +197,9 @@ const TimeTableStudent: React.FC = () => {
               </div>
             ) : (
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 text-center">
-                <p className="text-gray-600 dark:text-gray-300">No classes scheduled for today</p>
+                <p className="text-gray-600 dark:text-gray-300">
+                  No classes scheduled for today
+                </p>
               </div>
             )}
           </div>
@@ -213,11 +225,22 @@ const TimeTableStudent: React.FC = () => {
                   const event = eventInfo.event;
                   return (
                     <div className="p-1 h-full">
-                      <div className="font-medium text-sm">{event.extendedProps.courseCode}</div>
-                      <div className="text-xs">{event.extendedProps.courseTitle}</div>
+                      <div className="font-medium text-sm">
+                        {event.extendedProps.courseCode}
+                      </div>
+                      <div className="text-xs">
+                        {event.extendedProps.courseTitle}
+                      </div>
                       <div className="text-xs mt-1 opacity-90">
-                        {event.start?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                        {event.end?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {event.start?.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        -
+                        {event.end?.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </div>
                   );
@@ -229,7 +252,7 @@ const TimeTableStudent: React.FC = () => {
       </div>
 
       {/* Custom CSS to fix calendar theme issues */}
-      <style jsx global>{`
+      <style>{`
         .fc {
           --fc-border-color: rgba(229, 231, 235, 0.8);
           --fc-page-bg-color: transparent;

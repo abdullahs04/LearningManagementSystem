@@ -4,323 +4,305 @@ import { useModal } from "../../hooks/useModal";
 import { Modal } from "../../components/ui/modal";
 import Button from "../../components/ui/button/Button";
 
-// TODO : this will read from the struct saved
-// TODO make UI constant with the overall frontend
-
 export default function Grades() {
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const { isOpen, openModal, closeModal } = useModal();
+  const [view, setView] = useState("all"); // "all", "year1", "year2", etc.
 
-  // Sample courses data with grades
+  // Enhanced sample courses data with multiple years
   const courses = [
-    { 
-      id: 1, 
-      code: "CS101", 
-      name: "Introduction to Computer Science", 
-      instructor: "Dr. Sarah Johnson", 
-      status: "ongoing", 
-      progress: 70,
-      credits: 3,
-      currentGrade: "B+",
+    {
+      id: 1,
+      code: "CS101",
+      name: "Introduction to Computer Science",
+      instructor: "Dr. Sarah Johnson",
+      studyYear: "Year 1",
+      status: "completed",
       grades: {
-        assignments: [
-          { name: "Assignment 1", score: 85, totalPoints: 100 },
-          { name: "Assignment 2", score: 92, totalPoints: 100 },
-          { name: "Assignment 3", score: 78, totalPoints: 100 }
+        monthly: [
+          { name: "Monthly Test 1", score: 85, totalPoints: 100 },
+          { name: "Monthly Test 2", score: 92, totalPoints: 100 },
         ],
-        quizzes: [
-          { name: "Quiz 1", score: 18, totalPoints: 20 },
-          { name: "Quiz 2", score: 16, totalPoints: 20 },
-          { name: "Quiz 3", score: 19, totalPoints: 20 }
+        mocks: [
+          { name: "Mock Exam 1", score: 78, totalPoints: 100 },
+          { name: "Mock Exam 2", score: 82, totalPoints: 100 },
         ],
-        midterm: { score: 76, totalPoints: 100 },
-        final: null,
-        labs: [
-          { name: "Lab 1", score: 28, totalPoints: 30 },
-          { name: "Lab 2", score: 27, totalPoints: 30 },
-          { name: "Lab 3", score: 29, totalPoints: 30 }
-        ]
-      }
-    },
-    { 
-      id: 2, 
-      code: "MATH201", 
-      name: "Calculus II", 
-      instructor: "Prof. Robert Chen", 
-      status: "ongoing", 
-      progress: 65,
-      credits: 4,
-      currentGrade: "A-",
-      grades: {
-        assignments: [
-          { name: "Problem Set 1", score: 94, totalPoints: 100 },
-          { name: "Problem Set 2", score: 88, totalPoints: 100 }
+        standups: [
+          { name: "Standup Presentation 1", score: 45, totalPoints: 50 },
+          { name: "Standup Presentation 2", score: 48, totalPoints: 50 },
         ],
-        quizzes: [
-          { name: "Quiz 1", score: 9, totalPoints: 10 },
-          { name: "Quiz 2", score: 8, totalPoints: 10 }
+        testSessions: [
+          { name: "Session 1", score: 28, totalPoints: 30 },
+          { name: "Session 2", score: 27, totalPoints: 30 },
+          { name: "Session 3", score: 29, totalPoints: 30 },
         ],
-        midterm: { score: 82, totalPoints: 100 },
-        final: null,
-        projects: [
-          { name: "Application Project", score: 43, totalPoints: 50 }
-        ]
-      }
-    },
-    { 
-      id: 3, 
-      code: "PHY102", 
-      name: "Physics for Engineers", 
-      instructor: "Dr. Michael Williams", 
-      status: "completed", 
-      progress: 100,
-      credits: 4,
-      finalGrade: "A",
-      grades: {
-        assignments: [
-          { name: "Problem Set 1", score: 95, totalPoints: 100 },
-          { name: "Problem Set 2", score: 88, totalPoints: 100 },
-          { name: "Problem Set 3", score: 92, totalPoints: 100 },
-          { name: "Problem Set 4", score: 90, totalPoints: 100 }
+        weekly: [
+          { name: "Week 1", score: 18, totalPoints: 20 },
+          { name: "Week 2", score: 17, totalPoints: 20 },
         ],
-        quizzes: [
-          { name: "Quiz 1", score: 19, totalPoints: 20 },
-          { name: "Quiz 2", score: 18, totalPoints: 20 },
-          { name: "Quiz 3", score: 20, totalPoints: 20 },
-          { name: "Quiz 4", score: 17, totalPoints: 20 }
-        ],
-        midterm: { score: 89, totalPoints: 100 },
-        final: { score: 91, totalPoints: 100 },
-        labs: [
-          { name: "Lab 1", score: 47, totalPoints: 50 },
-          { name: "Lab 2", score: 48, totalPoints: 50 },
-          { name: "Lab 3", score: 49, totalPoints: 50 },
-          { name: "Lab 4", score: 50, totalPoints: 50 }
-        ]
-      }
-    },
-    { 
-      id: 4, 
-      code: "ENG105", 
-      name: "Technical Writing", 
-      instructor: "Prof. Emily Rodriguez", 
-      status: "completed", 
-      progress: 100,
-      credits: 3,
-      finalGrade: "A-",
-      grades: {
-        assignments: [
-          { name: "Essay 1", score: 87, totalPoints: 100 },
-          { name: "Essay 2", score: 92, totalPoints: 100 },
-          { name: "Research Paper", score: 85, totalPoints: 100 }
-        ],
-        quizzes: [
-          { name: "Grammar Quiz 1", score: 18, totalPoints: 20 },
-          { name: "Citation Quiz", score: 19, totalPoints: 20 }
-        ],
-        midterm: { score: 84, totalPoints: 100 },
-        final: { score: 86, totalPoints: 100 },
-        presentations: [
-          { name: "Group Presentation", score: 92, totalPoints: 100 },
-          { name: "Individual Presentation", score: 88, totalPoints: 100 }
-        ]
-      }
-    },
-    { 
-      id: 5, 
-      code: "CHEM101", 
-      name: "General Chemistry", 
-      instructor: "Dr. James Thompson", 
-      status: "ongoing", 
-      progress: 45,
-      credits: 4,
-      currentGrade: "B",
-      grades: {
-        assignments: [
-          { name: "Problem Set 1", score: 82, totalPoints: 100 },
-          { name: "Problem Set 2", score: 78, totalPoints: 100 }
-        ],
-        quizzes: [
-          { name: "Quiz 1", score: 15, totalPoints: 20 },
-          { name: "Quiz 2", score: 16, totalPoints: 20 }
-        ],
-        midterm: null,
-        final: null,
-        labs: [
-          { name: "Lab 1", score: 46, totalPoints: 50 },
-          { name: "Lab 2", score: 43, totalPoints: 50 }
-        ]
-      }
+        halfBook: { score: 88, totalPoints: 100 },
+        fullBook: { score: 92, totalPoints: 100 },
+      },
     },
     {
-      id: 6,
-      code: "HIST210",
-      name: "World History",
-      instructor: "Prof. David Clark",
-      status: "completed",
-      progress: 100,
-      credits: 3,
-      finalGrade: "B+",
+      id: 2,
+      code: "MATH120",
+      name: "Calculus I",
+      instructor: "Prof. Robert Chen",
+      studyYear: "Year 1",
+      status: "in-progress",
       grades: {
-        assignments: [
-          { name: "Essay 1", score: 85, totalPoints: 100 },
-          { name: "Essay 2", score: 82, totalPoints: 100 },
-          { name: "Research Paper", score: 88, totalPoints: 100 }
+        monthly: [
+          { name: "Monthly Test 1", score: 76, totalPoints: 100 },
+          { name: "Monthly Test 2", score: 81, totalPoints: 100 },
         ],
-        quizzes: [
-          { name: "Quiz 1", score: 15, totalPoints: 20 },
-          { name: "Quiz 2", score: 17, totalPoints: 20 },
-          { name: "Quiz 3", score: 16, totalPoints: 20 }
+        mocks: [{ name: "Mock Exam 1", score: 72, totalPoints: 100 }],
+        weekly: [
+          { name: "Week 1", score: 16, totalPoints: 20 },
+          { name: "Week 2", score: 18, totalPoints: 20 },
+          { name: "Week 3", score: 17, totalPoints: 20 },
         ],
-        midterm: { score: 82, totalPoints: 100 },
-        final: { score: 84, totalPoints: 100 },
-        participation: { score: 90, totalPoints: 100 }
-      }
-    }
+        halfBook: { score: 82, totalPoints: 100 },
+      },
+    },
+    {
+      id: 3,
+      code: "PHYS101",
+      name: "Physics Fundamentals",
+      instructor: "Dr. Lisa Wong",
+      studyYear: "Year 1",
+      status: "upcoming",
+      grades: {
+        monthly: [{ name: "Monthly Test 1", score: 79, totalPoints: 100 }],
+        weekly: [{ name: "Week 1", score: 17, totalPoints: 20 }],
+      },
+    },
   ];
 
-  const handleOpenModal = (course) => {
+  const studyYears = [...new Set(courses.map((course) => course.studyYear))];
+  const filteredCourses =
+    view === "all"
+      ? courses
+      : courses.filter((course) => course.studyYear === view);
+
+  const handleOpenModal = (course: Course) => {
     setSelectedCourse(course);
     openModal();
   };
 
-  const getStatusBadge = (status) => {
-    if (status === "completed") {
-      return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">Completed</span>;
-    } else {
-      return <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Ongoing</span>;
-    }
-  };
+  const getYearBadge = (year: string) => {
+    const yearColors = {
+      "Year 1":
+        "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+      "Year 2":
+        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+      "Year 3":
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+      "Year 4":
+        "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    };
 
-  const getGradeBadge = (grade) => {
-    let bgColor = "bg-gray-100";
-    let textColor = "text-gray-800";
-    let darkBgColor = "dark:bg-gray-800";
-    let darkTextColor = "dark:text-gray-300";
-
-    if (grade) {
-      if (grade.startsWith('A')) {
-        bgColor = "bg-green-100";
-        textColor = "text-green-800";
-        darkBgColor = "dark:bg-green-900/30";
-        darkTextColor = "dark:text-green-300";
-      } else if (grade.startsWith('B')) {
-        bgColor = "bg-blue-100";
-        textColor = "text-blue-800";
-        darkBgColor = "dark:bg-blue-900/30";
-        darkTextColor = "dark:text-blue-300";
-      } else if (grade.startsWith('C')) {
-        bgColor = "bg-yellow-100";
-        textColor = "text-yellow-800";
-        darkBgColor = "dark:bg-yellow-900/30";
-        darkTextColor = "dark:text-yellow-300";
-      } else if (grade.startsWith('D')) {
-        bgColor = "bg-orange-100";
-        textColor = "text-orange-800";
-        darkBgColor = "dark:bg-orange-900/30";
-        darkTextColor = "dark:text-orange-300";
-      } else if (grade.startsWith('F')) {
-        bgColor = "bg-red-100";
-        textColor = "text-red-800";
-        darkBgColor = "dark:bg-red-900/30";
-        darkTextColor = "dark:text-red-300";
-      }
-    }
+    const isValidYear = (y: string): y is keyof typeof yearColors => {
+      return y in yearColors;
+    };
 
     return (
-      <span 
-        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${bgColor} ${textColor} ${darkBgColor} ${darkTextColor}`}
+      <span
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          isValidYear(year)
+            ? yearColors[year]
+            : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        }`}
       >
-        {grade}
+        {year}
       </span>
     );
   };
 
-  const calculatePercentage = (score, totalPoints) => {
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      completed: {
+        color:
+          "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+        label: "Completed",
+      },
+      "in-progress": {
+        color:
+          "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+        label: "In Progress",
+      },
+      upcoming: {
+        color:
+          "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+        label: "Upcoming",
+      },
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || {
+      color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+      label: "Unknown",
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${config.color}`}
+      >
+        {config.label}
+      </span>
+    );
+  };
+
+  const calculatePercentage = (score: number, totalPoints: number) => {
     return ((score / totalPoints) * 100).toFixed(1);
   };
 
-  // Calculate GPA from courses
-  const calculateGPA = () => {
-    let totalPoints = 0;
-    let totalCredits = 0;
-
-    const gradeValues = {
-      'A': 4.0, 'A-': 3.7,
-      'B+': 3.3, 'B': 3.0, 'B-': 2.7,
-      'C+': 2.3, 'C': 2.0, 'C-': 1.7,
-      'D+': 1.3, 'D': 1.0, 'D-': 0.7,
-      'F': 0.0
+  type Course = {
+    id: number;
+    code: string;
+    name: string;
+    instructor: string;
+    studyYear: string;
+    status: string;
+    grades: {
+      monthly?: Array<{ name: string; score: number; totalPoints: number }>;
+      mocks?: Array<{ name: string; score: number; totalPoints: number }>;
+      standups?: Array<{ name: string; score: number; totalPoints: number }>;
+      testSessions?: Array<{
+        name: string;
+        score: number;
+        totalPoints: number;
+      }>;
+      weekly?: Array<{ name: string; score: number; totalPoints: number }>;
+      halfBook?: { score: number; totalPoints: number };
+      fullBook?: { score: number; totalPoints: number };
+      [key: string]:
+        | Array<{ name: string; score: number; totalPoints: number }>
+        | { score: number; totalPoints: number }
+        | undefined;
     };
+  };
 
-    courses.forEach(course => {
-      if (course.status === "completed") {
-        totalPoints += gradeValues[course.finalGrade] * course.credits;
-        totalCredits += course.credits;
+  const calculateCoursePercentage = (course: Course) => {
+    let totalScore = 0;
+    let totalPossible = 0;
+
+    Object.values(course.grades).forEach((assessment) => {
+      if (Array.isArray(assessment)) {
+        assessment.forEach((item) => {
+          totalScore += item.score;
+          totalPossible += item.totalPoints;
+        });
+      } else if (assessment && typeof assessment === "object") {
+        totalScore += assessment.score;
+        totalPossible += assessment.totalPoints;
       }
     });
 
-    return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 'N/A';
+    return totalPossible > 0
+      ? ((totalScore / totalPossible) * 100).toFixed(1)
+      : "0";
   };
 
-  // Progress bar color based on grade
-  const getProgressBarColor = (grade) => {
-    if (!grade) return "bg-gray-200 dark:bg-gray-700";
-    
-    if (grade.startsWith('A')) {
-      return "bg-green-500 dark:bg-green-600";
-    } else if (grade.startsWith('B')) {
-      return "bg-blue-500 dark:bg-blue-600";
-    } else if (grade.startsWith('C')) {
-      return "bg-yellow-500 dark:bg-yellow-600";
-    } else if (grade.startsWith('D')) {
-      return "bg-orange-500 dark:bg-orange-600";
-    } else if (grade.startsWith('F')) {
-      return "bg-red-500 dark:bg-red-600";
-    }
-    
-    return "bg-gray-200 dark:bg-gray-700";
+  const getLetterGrade = (percentage: number | string): string => {
+    const num = parseFloat(percentage.toString());
+    if (num >= 90) return "A";
+    if (num >= 80) return "B";
+    if (num >= 70) return "C";
+    if (num >= 60) return "D";
+    return "F";
   };
 
-  // Render the detailed grade breakdown in the modal
+  const getGradeColorClass = (percentage: number | string): string => {
+    const num = parseFloat(percentage.toString());
+    if (num >= 90) return "text-green-600 dark:text-green-400";
+    if (num >= 80) return "text-blue-600 dark:text-blue-400";
+    if (num >= 70) return "text-yellow-600 dark:text-yellow-400";
+    if (num >= 60) return "text-orange-600 dark:text-orange-400";
+    return "text-red-600 dark:text-red-400";
+  };
+
+  const calculateOverallGPA = () => {
+    const completedCourses = courses.filter(
+      (c) => c.status === "completed" || c.status === "in-progress"
+    );
+    if (completedCourses.length === 0) return "N/A";
+
+    const totalPercentage = completedCourses.reduce((sum, course) => {
+      return sum + parseFloat(calculateCoursePercentage(course));
+    }, 0);
+
+    return (totalPercentage / completedCourses.length).toFixed(1) + "%";
+  };
+
   const renderGradeBreakdown = () => {
     if (!selectedCourse) return null;
-    
+
     const grades = selectedCourse.grades;
-    
-    // Function to render a section of grades
-    const renderGradeSection = (title, items) => {
+    const coursePercentage = calculateCoursePercentage(selectedCourse);
+    const letterGrade = getLetterGrade(coursePercentage);
+
+    const renderGradeSection = (
+      title: string,
+      items:
+        | Array<{ name: string; score: number; totalPoints: number }>
+        | { score: number; totalPoints: number }
+        | undefined
+    ) => {
       if (!items || (Array.isArray(items) && items.length === 0)) return null;
-      
+
       return (
         <div className="mb-6">
-          <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">{title}</h4>
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+            {title}
+          </h4>
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Item</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Score</th>
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Percentage</th>
-                </tr>
-              </thead>
               <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900/[0.025]">
                 {Array.isArray(items) ? (
-                  items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-900 dark:text-white">{item.name}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{item.score} / {item.totalPoints}</td>
-                      <td className="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">
-                        {calculatePercentage(item.score, item.totalPoints)}%
-                      </td>
-                    </tr>
-                  ))
+                  items.map((item, index) => {
+                    const itemPercentage = calculatePercentage(
+                      item.score,
+                      item.totalPoints
+                    );
+                    return (
+                      <tr
+                        key={index}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                      >
+                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                          {item.name}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {item.score} / {item.totalPoints}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
+                          <span
+                            className={`font-semibold ${getGradeColorClass(
+                              itemPercentage
+                            )}`}
+                          >
+                            {itemPercentage}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
-                  <tr>
-                    <td className="whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-900 dark:text-white">{title}</td>
-                    <td className="whitespace-nowrap px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{items.score} / {items.totalPoints}</td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500 dark:text-gray-400">
-                      {calculatePercentage(items.score, items.totalPoints)}%
+                  <tr className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                    <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                      {title}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {items.score} / {items.totalPoints}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
+                      <span
+                        className={`font-semibold ${getGradeColorClass(
+                          calculatePercentage(items.score, items.totalPoints)
+                        )}`}
+                      >
+                        {calculatePercentage(items.score, items.totalPoints)}%
+                      </span>
                     </td>
                   </tr>
                 )}
@@ -331,9 +313,37 @@ export default function Grades() {
       );
     };
 
+    const getPerformanceTrend = () => {
+      if (grades.monthly && grades.monthly.length >= 2) {
+        const recent = grades.monthly[grades.monthly.length - 1].score;
+        const previous = grades.monthly[grades.monthly.length - 2].score;
+
+        if (recent > previous) {
+          return {
+            text: "Improving",
+            icon: "📈",
+            color: "text-green-600 dark:text-green-400",
+          };
+        } else if (recent < previous) {
+          return {
+            text: "Declining",
+            icon: "📉",
+            color: "text-red-600 dark:text-red-400",
+          };
+        }
+      }
+      return {
+        text: "Stable",
+        icon: "➖",
+        color: "text-blue-600 dark:text-blue-400",
+      };
+    };
+
+    const trend = getPerformanceTrend();
+
     return (
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {selectedCourse.code}: {selectedCourse.name}
@@ -342,45 +352,44 @@ export default function Grades() {
               Instructor: {selectedCourse.instructor}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
+              {getYearBadge(selectedCourse.studyYear)}
               {getStatusBadge(selectedCourse.status)}
-              {selectedCourse.status === "completed" ? 
-                getGradeBadge(selectedCourse.finalGrade) : 
-                getGradeBadge(selectedCourse.currentGrade)}
-              <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                {selectedCourse.credits} {selectedCourse.credits === 1 ? 'Credit' : 'Credits'}
-              </span>
             </div>
           </div>
-          
-          {selectedCourse.status === "completed" && (
-            <div className="mt-4 rounded-md bg-green-50 px-4 py-2 text-green-800 dark:bg-green-900/20 dark:text-green-300 sm:mt-0">
-              <span className="text-lg font-bold">{selectedCourse.finalGrade}</span>
-              <span className="text-sm"> Final Grade</span>
+
+          <div className="mt-4 sm:mt-0">
+            <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800/50 text-center">
+              <div className="text-xl font-bold mb-1">Overall Grade</div>
+              <div className="flex flex-col items-center">
+                <div
+                  className={`text-3xl font-bold ${getGradeColorClass(
+                    coursePercentage
+                  )}`}
+                >
+                  {letterGrade}
+                </div>
+                <div className="text-gray-700 dark:text-gray-300 font-medium">
+                  {coursePercentage}%
+                </div>
+                <div
+                  className={`mt-2 text-sm font-medium ${trend.color} flex items-center`}
+                >
+                  <span className="mr-1">{trend.icon}</span> {trend.text}
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
 
         <div className="mx-auto h-px w-full bg-gray-200 dark:bg-gray-700"></div>
 
-        {/* Render each type of grade section */}
-        {renderGradeSection("Assignments", grades.assignments)}
-        {renderGradeSection("Quizzes", grades.quizzes)}
-        {renderGradeSection("Labs", grades.labs)}
-        {renderGradeSection("Projects", grades.projects)}
-        {renderGradeSection("Presentations", grades.presentations)}
-        {renderGradeSection("Participation", grades.participation)}
-        {grades.midterm && renderGradeSection("Midterm Exam", grades.midterm)}
-        {grades.final && renderGradeSection("Final Exam", grades.final)}
-
-        {/* Overall summary */}
-        {selectedCourse.status === "completed" && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-            <h4 className="text-base font-medium text-gray-900 dark:text-white">Grade Summary</h4>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              You completed this course with a final grade of <span className="font-medium text-gray-900 dark:text-white">{selectedCourse.finalGrade}</span>.
-            </p>
-          </div>
-        )}
+        {renderGradeSection("Monthly Tests", grades.monthly)}
+        {renderGradeSection("Mock Exams", grades.mocks)}
+        {renderGradeSection("Standup Presentations", grades.standups)}
+        {renderGradeSection("Test Sessions", grades.testSessions)}
+        {renderGradeSection("Weekly Assessments", grades.weekly)}
+        {renderGradeSection("Half Book Exam", grades.halfBook)}
+        {renderGradeSection("Full Book Exam", grades.fullBook)}
       </div>
     );
   };
@@ -388,132 +397,241 @@ export default function Grades() {
   return (
     <>
       <PageMeta
-        title="Grades and Results"
-        description="View your course grades and detailed results"
+        title="Academic Progress"
+        description="View your academic progress and detailed results"
       />
-      
-      {/* Header Section */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
+
+      <div className="rounded-2xl border border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 p-6 dark:border-gray-800 dark:bg-gradient-to-r dark:from-blue-900/10 dark:to-purple-900/10">
         <div className="space-y-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Grades and Results</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Academic Progress
+              </h1>
               <p className="mt-1 text-gray-600 dark:text-gray-400">
-                View your course grades, assignment scores, and overall performance.
+                Track your monthly tests, mock exams, and book assessments
               </p>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Cumulative GPA</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{calculateGPA()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Semester Summary */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="p-5 lg:p-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Semester Summary</h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Overall performance across all courses
-          </p>
-          
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Completed Courses</h3>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {courses.filter(course => course.status === "completed").length}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">out of {courses.length} total</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">Credits Completed</h3>
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {courses.filter(course => course.status === "completed").reduce((sum, course) => sum + course.credits, 0)}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">credits</span>
-                </div>
+            <div className="flex items-center space-x-2">
+              <span className="hidden sm:inline text-sm text-gray-500 dark:text-gray-400">
+                Filter by:
+              </span>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setView("all")}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                    view === "all"
+                      ? "bg-blue-600 text-white dark:bg-blue-700"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  All Years
+                </button>
+                {studyYears.map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => setView(year)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                      view === year
+                        ? "bg-blue-600 text-white dark:bg-blue-700"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Courses List */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-        <div className="p-5 lg:p-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Course Grades</h2>
+      <div className="mt-6 grid gap-6 md:grid-cols-3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="flex flex-col">
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Current Study Year
+            </div>
+            <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              Year 1
+            </div>
+            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              2024-2025 Academic Year
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="flex flex-col">
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Overall GPA
+            </div>
+            <div className="mt-2 text-3xl font-bold text-blue-600 dark:text-blue-400">
+              {calculateOverallGPA()}
+            </div>
+            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Across All Courses
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="flex flex-col">
+            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Course Completion
+            </div>
+            <div className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              {courses.filter((c) => c.status === "completed").length}/
+              {courses.length}
+            </div>
+            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Courses Completed
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="flex flex-col">
+          <div className="flex justify-between text-sm">
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              Year 1 Progress
+            </span>
+            <span className="font-medium text-gray-700 dark:text-gray-300">
+              {Math.round(
+                (courses.filter((c) => c.status === "completed").length /
+                  courses.length) *
+                  100
+              )}
+              %
+            </span>
+          </div>
+          <div className="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-2 rounded-full bg-blue-600 dark:bg-blue-500"
+              style={{
+                width: `${
+                  (courses.filter((c) => c.status === "completed").length /
+                    courses.length) *
+                  100
+                }%`,
+              }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-white overflow-hidden dark:border-gray-800 dark:bg-white/[0.03]">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+            Course Progress
+          </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Select a completed course to view detailed results
+            Select a course to view detailed assessment results
           </p>
         </div>
-        
+
         <div className="overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Course</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Status</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Grade</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Progress</th>
-                <th scope="col" className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Action</th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Course
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Study Year
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Status
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Grade
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                >
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900/[0.025]">
-              {courses.map((course) => (
-                <tr key={course.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex flex-col">
-                      <div className="font-medium text-gray-900 dark:text-white">{course.code}: {course.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{course.instructor}</div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {getStatusBadge(course.status)}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {course.status === "completed" ? 
-                      getGradeBadge(course.finalGrade) : 
-                      getGradeBadge(course.currentGrade)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="mr-2 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                        <div 
-                          className={`h-2.5 rounded-full ${getProgressBarColor(course.status === "completed" ? course.finalGrade : course.currentGrade)}`}
-                          style={{ width: `${course.progress}%` }}
-                        ></div>
+              {filteredCourses.map((course) => {
+                const percentage = calculateCoursePercentage(course);
+                const letterGrade = getLetterGrade(percentage);
+                return (
+                  <tr
+                    key={course.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                  >
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex flex-col">
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {course.code}: {course.name}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {course.instructor}
+                        </div>
                       </div>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{course.progress}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    {course.status === "completed" ? (
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {getYearBadge(course.studyYear)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      {getStatusBadge(course.status)}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="flex items-center">
+                        <span
+                          className={`text-xl font-bold mr-2 ${getGradeColorClass(
+                            percentage
+                          )}`}
+                        >
+                          {letterGrade}
+                        </span>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          {percentage}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
                       <Button
                         onClick={() => handleOpenModal(course)}
-                        className="inline-flex justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                        className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                       >
-                        View Result
+                        View Details
                       </Button>
-                    ) : (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">In Progress</span>
-                    )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredCourses.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    No courses found for the selected filter
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Detailed Grade Modal */}
       {selectedCourse && (
         <Modal isOpen={isOpen} onClose={closeModal}>
           <div className="max-h-[80vh] overflow-y-auto p-6">
@@ -522,7 +640,7 @@ export default function Grades() {
           <div className="flex justify-end border-t border-gray-200 p-4 dark:border-gray-700">
             <Button
               onClick={closeModal}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
             >
               Close
             </Button>

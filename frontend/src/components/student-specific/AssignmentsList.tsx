@@ -1,10 +1,19 @@
 import { Link } from "react-router-dom";
 
+// Define interfaces for the assignment data structure
+interface Assignment {
+  id: number;
+  title: string;
+  course: string;
+  dueDate: string;
+  status: "pending" | "completed" | "overdue";
+}
+
 export default function AssignmentsList() {
-  const assignments = [
+  const assignments: Assignment[] = [
     {
       id: 1,
-      title: "Software Engineering Principles",
+      title: "Software Engineering Principles", 
       course: "CS401",
       dueDate: "2023-06-15",
       status: "pending",
@@ -162,9 +171,15 @@ export default function AssignmentsList() {
   const completedAssignments = assignments.filter(a => a.status === "completed");
   const overdueAssignments = assignments.filter(a => a.status === "overdue");
 
-  const getFirstThree = (arr) => arr.slice(0, 3);
+  // Fixed the "arr" parameter type
+  const getFirstThree = (arr: Assignment[]): Assignment[] => arr.slice(0, 3);
 
-  const EmptyState = ({ status }) => (
+  // Fixed the "status" parameter type
+  interface EmptyStateProps {
+    status: string;
+  }
+  
+  const EmptyState = ({ status }: EmptyStateProps) => (
     <div className="p-6 text-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
       <svg
         className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
@@ -226,7 +241,7 @@ export default function AssignmentsList() {
         </div>
         <div className="space-y-4">
           {pendingAssignments.length > 0 ? (
-            getFirstThree(pendingAssignments).map((assignment) => (
+            getFirstThree(pendingAssignments).map((assignment: Assignment) => (
               <Link 
                 key={assignment.id}
                 to={`/assignments/${assignment.id}`}
@@ -264,7 +279,7 @@ export default function AssignmentsList() {
             )}
           </div>
           <div className="space-y-4">
-            {getFirstThree(overdueAssignments).map((assignment) => (
+            {getFirstThree(overdueAssignments).map((assignment: Assignment) => (
               <Link 
                 key={assignment.id}
                 to={`/assignments/${assignment.id}`}
@@ -300,7 +315,7 @@ export default function AssignmentsList() {
         </div>
         <div className="space-y-4">
           {completedAssignments.length > 0 ? (
-            getFirstThree(completedAssignments).map((assignment) => (
+            getFirstThree(completedAssignments).map((assignment: Assignment) => (
               <Link 
                 key={assignment.id}
                 to={`/assignments/${assignment.id}`}

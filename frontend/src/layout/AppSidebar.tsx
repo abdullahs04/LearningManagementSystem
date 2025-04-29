@@ -6,18 +6,35 @@ import {
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
-  HorizontaLDots,
-  ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
-  TableIcon,
   UserCircleIcon,
 } from "../icons";
+
+import {
+  LayoutDashboard,
+  ClipboardCheck,
+  BookOpen,
+  MessageSquare,
+  Award,
+  Calendar,
+  User,
+  Users,
+  School,
+  GraduationCap,
+  CalendarClock,
+  Clock,
+  FileSpreadsheet,
+  DollarSign,
+  Settings,
+  Star,
+  BarChart,
+  CheckCircle,
+} from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 
 // TODO add logic to check which type of user logged in and show the menu accordingly
-const UserLoggedInIs: "admin" | "teacher" | "student" = "admin"; // or "user" or "teacher" or "student"
+const UserLoggedInIs = "student" as "admin" | "teacher" | "student"; // or "user" or "teacher" or "student"
 
 // TODO: the path will be decided later on how to implement,
 //  the course icon and name will be set by the teacher or admin TO BE DECIDED
@@ -33,7 +50,7 @@ const StudentCourses = [
     icon: <UserCircleIcon />,
     path: "/course-1",
   },
-]
+];
 
 const TeacherCourses = [
   {
@@ -46,7 +63,7 @@ const TeacherCourses = [
     icon: <UserCircleIcon />,
     path: "/course-1",
   },
-]
+];
 
 type NavItem = {
   name: string;
@@ -59,11 +76,7 @@ type NavItem = {
 const getNavItems = (): NavItem[] => {
   if (UserLoggedInIs === "admin") {
     return [
-      {
-        icon: <GridIcon />,
-        name: "Overview",
-        path: "admin-overview",
-      },
+      { icon: <GridIcon />, name: "Overview", path: "admin-overview" },
       {
         icon: <UserCircleIcon />,
         name: "Staff Management",
@@ -74,11 +87,7 @@ const getNavItems = (): NavItem[] => {
         name: "Classroom & Subject Management",
         path: "/class-and-student-management",
       },
-      {
-        icon: <UserCircleIcon />,
-        name: "Gradebook",
-        path: "/gradebook",
-      },
+      { icon: <UserCircleIcon />, name: "Gradebook", path: "/gradebook" },
       {
         icon: <UserCircleIcon />,
         name: "Examinations & Timetable",
@@ -94,12 +103,7 @@ const getNavItems = (): NavItem[] => {
         name: "Fee Management",
         path: "/fee-management",
       },
-      {
-        icon: <UserCircleIcon />,
-        name: "User Profile",
-        path: "/profile",
-      },
-
+      { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
       {
         icon: <UserCircleIcon />,
         name: "System Settings",
@@ -142,26 +146,22 @@ const getNavItems = (): NavItem[] => {
         name: "Results submission",
         path: "/result-submission",
       },
-      {
-        icon: <UserCircleIcon />,
-        name: "User Profile",
-        path: "/profile",
-      },
+      { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
     ];
   } else if (UserLoggedInIs === "student") {
     return [
       {
-        icon: <UserCircleIcon />,
+        icon: <LayoutDashboard size={18} />,
         name: "Overview",
         path: "/student-overview",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <ClipboardCheck size={18} />,
         name: "Attendance Record",
         path: "/attendance-records",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <BookOpen size={18} />,
         name: "Courses",
         subItems: StudentCourses.map((course) => ({
           icon: course.icon,
@@ -170,25 +170,21 @@ const getNavItems = (): NavItem[] => {
         })),
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <MessageSquare size={18} />,
         name: "Feedback & Reviews",
         path: "/feedback",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <BarChart size={18} />,
         name: "Results & Grades",
         path: "/grades",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <Calendar size={18} />,
         name: "TimeTable",
         path: "/timetable-student",
       },
-      {
-        icon: <UserCircleIcon />,
-        name: "Student Profile",
-        path: "/profile",
-      },
+      { icon: <User size={18} />, name: "Student Profile", path: "/profile" },
     ];
   }
   return [];
@@ -302,19 +298,22 @@ const AppSidebar: React.FC = () => {
           {nav.subItems ? (
             <button
               onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group ${openSubmenu?.type === menuType && openSubmenu?.index === index
+              className={`menu-item group ${
+                openSubmenu?.type === menuType && openSubmenu?.index === index
                   ? "menu-item-active"
                   : "menu-item-inactive"
-                } cursor-pointer ${!isExpanded && !isHovered
+              } cursor-pointer ${
+                !isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
-                }`}
+              }`}
             >
               <span
-                className={`menu-item-icon-size  ${openSubmenu?.type === menuType && openSubmenu?.index === index
+                className={`menu-item-icon-size  ${
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
-                  }`}
+                }`}
               >
                 {nav.icon}
               </span>
@@ -323,11 +322,12 @@ const AppSidebar: React.FC = () => {
               )}
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${openSubmenu?.type === menuType &&
-                      openSubmenu?.index === index
+                  className={`ml-auto w-5 h-5 transition-transform duration-200 ${
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
                       : ""
-                    }`}
+                  }`}
                 />
               )}
             </button>
@@ -335,14 +335,16 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 to={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                  }`}
+                className={`menu-item group ${
+                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                }`}
               >
                 <span
-                  className={`menu-item-icon-size ${isActive(nav.path)
+                  className={`menu-item-icon-size ${
+                    isActive(nav.path)
                       ? "menu-item-icon-active"
                       : "menu-item-icon-inactive"
-                    }`}
+                  }`}
                 >
                   {nav.icon}
                 </span>
@@ -370,29 +372,32 @@ const AppSidebar: React.FC = () => {
                   <li key={subItem.name}>
                     <Link
                       to={subItem.path}
-                      className={`menu-dropdown-item ${isActive(subItem.path)
+                      className={`menu-dropdown-item ${
+                        isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
-                        }`}
+                      }`}
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
                         {subItem.new && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
+                            className={`ml-auto ${
+                              isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            } menu-dropdown-badge`}
                           >
                             new
                           </span>
                         )}
                         {subItem.pro && (
                           <span
-                            className={`ml-auto ${isActive(subItem.path)
+                            className={`ml-auto ${
+                              isActive(subItem.path)
                                 ? "menu-dropdown-badge-active"
                                 : "menu-dropdown-badge-inactive"
-                              } menu-dropdown-badge`}
+                            } menu-dropdown-badge`}
                           >
                             pro
                           </span>
@@ -412,9 +417,10 @@ const AppSidebar: React.FC = () => {
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen
-          ? "w-[290px]"
-          : isHovered
+        ${
+          isExpanded || isMobileOpen
+            ? "w-[290px]"
+            : isHovered
             ? "w-[290px]"
             : "w-[90px]"
         }
@@ -424,8 +430,9 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
+        className={`py-8 flex ${
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+        }`}
       >
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
@@ -460,13 +467,12 @@ const AppSidebar: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div>
               <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  !isExpanded && !isHovered
                     ? "lg:justify-center"
                     : "justify-start"
-                  }`}
-              >
-
-              </h2>
+                }`}
+              ></h2>
               {renderMenuItems(navItems, "main")}
             </div>
           </div>
