@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:smoke": "playwright test tests/smoke.spec.ts",
-    "test:student-files": "ts-node tests/check-student-pages.ts"
+    "type": "module",
+    "test:student-files": "ts-node --loader ts-node/esm frontend/tests/check-student-pages.ts"
   },
   "dependencies": {
     "@chakra-ui/card": "^2.2.0",

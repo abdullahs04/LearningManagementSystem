@@ -17,9 +17,30 @@ export default function Feedback() {
 
   // Sample courses data
   const courses = [
-    { id: 1, code: "CS101", name: "Introduction to Computer Science", instructor: "Dr. Sarah Johnson", status: "ongoing", progress: 70 },
-    { id: 2, code: "MATH201", name: "Calculus II", instructor: "Prof. Robert Chen", status: "ongoing", progress: 65 },
-    { id: 3, code: "PHY102", name: "Physics for Engineers", instructor: "Dr. Michael Williams", status: "completed", progress: 100 },
+    {
+      id: 1,
+      code: "CS101",
+      name: "Introduction to Computer Science",
+      instructor: "Dr. Sarah Johnson",
+      status: "ongoing",
+      progress: 70,
+    },
+    {
+      id: 2,
+      code: "MATH201",
+      name: "Calculus II",
+      instructor: "Prof. Robert Chen",
+      status: "ongoing",
+      progress: 65,
+    },
+    {
+      id: 3,
+      code: "PHY102",
+      name: "Physics for Engineers",
+      instructor: "Dr. Michael Williams",
+      status: "completed",
+      progress: 100,
+    },
   ];
 
   interface Course {
@@ -42,12 +63,26 @@ export default function Feedback() {
   };
 
   const getCourseStatusBadge = (status: string) => {
-    return status === "completed" 
-      ? <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">Completed</span>
-      : <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Ongoing</span>;
+    return status === "completed" ? (
+      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+        Completed
+      </span>
+    ) : (
+      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+        Ongoing
+      </span>
+    );
   };
 
-  const StarRating = ({ category, value, onChange }: { category: string; value: number; onChange: (category: string, value: number) => void }) => {
+  const StarRating = ({
+    category,
+    value,
+    onChange,
+  }: {
+    category: string;
+    value: number;
+    onChange: (category: string, value: number) => void;
+  }) => {
     return (
       <div className="flex items-center">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -56,11 +91,21 @@ export default function Feedback() {
             type="button"
             onClick={() => onChange(category, star)}
             className={`h-8 w-8 focus:outline-none ${
-              star <= value ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"
+              star <= value
+                ? "text-yellow-400"
+                : "text-gray-300 dark:text-gray-600"
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         ))}
@@ -75,15 +120,23 @@ export default function Feedback() {
       <div className="space-y-6">
         <div className="mb-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {feedbackType === "feedback" ? "Course Feedback" : "Submit Complaint"}
+            {feedbackType === "feedback"
+              ? "Course Feedback"
+              : "Submit Complaint"}
           </h3>
-          
+
           <div className="mt-2 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
             <div className="flex items-center">
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">{selectedCourse.code}: {selectedCourse.name}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Instructor: {selectedCourse.instructor}</p>
-                <div className="mt-1">{getCourseStatusBadge(selectedCourse.status)}</div>
+                <h4 className="font-medium text-gray-900 dark:text-white">
+                  {selectedCourse.code}: {selectedCourse.name}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Instructor: {selectedCourse.instructor}
+                </p>
+                <div className="mt-1">
+                  {getCourseStatusBadge(selectedCourse.status)}
+                </div>
               </div>
             </div>
           </div>
@@ -96,7 +149,9 @@ export default function Feedback() {
           <input
             type="text"
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            placeholder={feedbackType === "feedback" ? "Feedback title" : "Complaint title"}
+            placeholder={
+              feedbackType === "feedback" ? "Feedback title" : "Complaint title"
+            }
           />
         </div>
 
@@ -108,16 +163,34 @@ export default function Feedback() {
               </label>
               <div className="mt-2 space-y-4">
                 <div>
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Course Content</label>
-                  <StarRating category="content" value={rating.content} onChange={handleRatingChange} />
+                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                    Course Content
+                  </label>
+                  <StarRating
+                    category="content"
+                    value={rating.content}
+                    onChange={handleRatingChange}
+                  />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Instructor Effectiveness</label>
-                  <StarRating category="instructor" value={rating.instructor} onChange={handleRatingChange} />
+                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                    Instructor Effectiveness
+                  </label>
+                  <StarRating
+                    category="instructor"
+                    value={rating.instructor}
+                    onChange={handleRatingChange}
+                  />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-600 dark:text-gray-400">Course Difficulty</label>
-                  <StarRating category="difficulty" value={rating.difficulty} onChange={handleRatingChange} />
+                  <label className="text-sm text-gray-600 dark:text-gray-400">
+                    Course Difficulty
+                  </label>
+                  <StarRating
+                    category="difficulty"
+                    value={rating.difficulty}
+                    onChange={handleRatingChange}
+                  />
                 </div>
               </div>
             </div>
@@ -157,11 +230,19 @@ export default function Feedback() {
               </label>
               <div className="mt-2 grid grid-cols-2 gap-4">
                 <label className="flex items-center space-x-2 rounded-lg border p-3 hover:border-blue-500">
-                  <input type="radio" name="urgency" className="h-4 w-4 text-blue-600" />
+                  <input
+                    type="radio"
+                    name="urgency"
+                    className="h-4 w-4 text-blue-600"
+                  />
                   <span className="text-sm">Normal (72h response)</span>
                 </label>
                 <label className="flex items-center space-x-2 rounded-lg border p-3 hover:border-blue-500">
-                  <input type="radio" name="urgency" className="h-4 w-4 text-blue-600" />
+                  <input
+                    type="radio"
+                    name="urgency"
+                    className="h-4 w-4 text-blue-600"
+                  />
                   <span className="text-sm">Urgent (24h response)</span>
                 </label>
               </div>
@@ -171,14 +252,18 @@ export default function Feedback() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {feedbackType === "feedback" ? "Detailed Feedback" : "Complaint Details"}
+            {feedbackType === "feedback"
+              ? "Detailed Feedback"
+              : "Complaint Details"}
           </label>
           <textarea
             rows={4}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            placeholder={feedbackType === "feedback" 
-              ? "What did you like or dislike about this course?"
-              : "Please describe your complaint in detail..."}
+            placeholder={
+              feedbackType === "feedback"
+                ? "What did you like or dislike about this course?"
+                : "Please describe your complaint in detail..."
+            }
           />
         </div>
 
@@ -189,10 +274,10 @@ export default function Feedback() {
           >
             Cancel
           </Button>
-          <Button 
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-          >
-            {feedbackType === "feedback" ? "Submit Feedback" : "Submit Complaint"}
+          <Button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600">
+            {feedbackType === "feedback"
+              ? "Submit Feedback"
+              : "Submit Complaint"}
           </Button>
         </div>
       </div>
@@ -205,15 +290,17 @@ export default function Feedback() {
         title="Feedback and Reviews"
         description="This is the Feedback and Reviews page for the LGS Students Dashboard"
       />
-      
+
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="p-5 lg:p-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Your Courses</h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white">
+            Your Courses
+          </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Select a course to provide feedback or file a complaint
           </p>
         </div>
-        
+
         <div className="divide-y divide-gray-200 dark:divide-gray-800">
           {courses.map((course) => (
             <div key={course.id} className="p-5 lg:p-6">
@@ -231,7 +318,7 @@ export default function Feedback() {
                     Instructor: {course.instructor}
                   </p>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handleOpenModal(course, "feedback")}

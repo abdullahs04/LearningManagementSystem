@@ -1,6 +1,12 @@
 name: Check Student Page Files
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - 'frontend/src/pages/student-specific/*.tsx'
+  pull_request:
+    paths:
+      - 'frontend/src/pages/student-specific/*.tsx'
 
 jobs:
   check-student-pages:
@@ -26,4 +32,3 @@ jobs:
       - name: Check student pages for TypeScript errors
         working-directory: ./frontend
         run: npm run test:student-files
-
