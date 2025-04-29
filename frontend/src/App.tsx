@@ -20,6 +20,16 @@ import Home from "./pages/Dashboard/Home";
 import Homepage from "./pages/Dashboard/Homepage";
 import LandingPage from "./pages/admin-dashboard/Overview";
 
+// Admin Pages
+import AdminOverview from "./pages/admin-dashboard/Overview";
+import SystemSettings from "./pages/admin-dashboard/SystemSettings";
+import FeeManagement from "./pages/admin-dashboard/FeeManagement";
+import AttendanceTracking from "./pages/admin-dashboard/AttendanceRecords";
+import Gradebook from "./pages/admin-dashboard/gradebook";
+import ClassAndStudentManagement from "./pages/admin-dashboard/classAndSubmanagement";
+import StaffManagement from "./pages/admin-dashboard/staffManagement";
+import TimetableAndExams from "./pages/admin-dashboard/TimetableAndExams";
+
 // Professor Pages
 import ProfessorOverview from "./pages/teacher-dashboard/Overview";
 import TimeTableProfessor from "./pages/teacher-dashboard/TimeTable";
@@ -82,7 +92,16 @@ export default function App() {
             <Route path="/grading" element={<Grading />} />
             <Route path="/result-submission" element={<ResultSubmission />} />
             <Route path="/queries-and-feedback" element={<QueriesAndFeedback />} />
-
+            {/* Admin Pages */}
+            <Route path="/admin-overview" element={<AdminOverview />} />
+            <Route path="/system-settings" element={<SystemSettings />} />
+            <Route path="/fee-management" element={<FeeManagement />} />
+            <Route path="/attendance-tracking" element={<AttendanceTracking />} />
+            <Route path="/gradebook" element={<Gradebook />} />
+            <Route path="/class-and-student-management" element={<ClassAndStudentManagement />} />
+            <Route path="/staff-management" element={<StaffManagement />} />
+            <Route path="/timetable-and-exams" element={<TimetableAndExams />} />
+            {/* User Profiles */}
 
             {/* Student Pages */}
             <Route path="/student-overview" element={<StudentOverview />} />
