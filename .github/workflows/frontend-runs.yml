@@ -1,0 +1,34 @@
+name: Frontend Smoke Test
+
+on: [push, pull_request]
+
+jobs:
+  frontend-runs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Install Playwright dependencies
+        working-directory: ./frontend
+        run: npx playwright install --with-deps
+
+      - name: Start Vite dev server
+        working-directory: ./frontend
+        run: |
+          nohup npm run dev > dev.log 2>&1 &
+          npx wait-on http://localhost:5173
+
+      - name: check whether frontend is running
+        working-directory: ./frontend
+        run: npm run test:smoke

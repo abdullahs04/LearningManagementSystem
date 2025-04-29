@@ -9,10 +9,13 @@ export default defineConfig({
     svgr({
       svgrOptions: {
         icon: true,
-        // This will transform your SVG to a React component
         exportType: "named",
         namedExport: "ReactComponent",
       },
     }),
   ],
+  server: {
+    port: 5173,
+    strictPort: true, // ✅ This makes Vite crash if port is already in use
+  },
 });
