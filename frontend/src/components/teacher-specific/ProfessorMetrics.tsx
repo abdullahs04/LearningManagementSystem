@@ -6,7 +6,7 @@ export default function ProfessorMetrics() {
       <MetricCard title="Next Lecture In" value="2h 45m" />
       <MetricCard title="Assignments Due" value="8" />
       <MetricCard title="Pending Grading Items" value="15" />
-      <MetricCard title="Completed Courses" value="5" />
+      <MetricCard title="Student Queries" value="12" />
     </div>
   );
 }

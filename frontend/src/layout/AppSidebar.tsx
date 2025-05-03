@@ -3,9 +3,7 @@ import { Link, useLocation } from "react-router";
 
 import {
   BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
-  GridIcon,
   PieChartIcon,
   PlugInIcon,
   UserCircleIcon,
@@ -16,25 +14,21 @@ import {
   ClipboardCheck,
   BookOpen,
   MessageSquare,
-  Award,
   Calendar,
   User,
   Users,
   School,
   GraduationCap,
   CalendarClock,
-  Clock,
-  FileSpreadsheet,
   DollarSign,
   Settings,
-  Star,
   BarChart,
   CheckCircle,
 } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 
 // TODO add logic to check which type of user logged in and show the menu accordingly
-const UserLoggedInIs = "student" as "admin" | "teacher" | "student"; // or "user" or "teacher" or "student"
+const UserLoggedInIs = "teacher" as "admin" | "teacher" | "student"; // or "user" or "teacher" or "student"
 
 // TODO: the path will be decided later on how to implement,
 //  the course icon and name will be set by the teacher or admin TO BE DECIDED
@@ -76,36 +70,36 @@ type NavItem = {
 const getNavItems = (): NavItem[] => {
   if (UserLoggedInIs === "admin") {
     return [
-      { icon: <GridIcon />, name: "Overview", path: "admin-overview" },
+      { icon: <LayoutDashboard size={18} />, name: "Overview", path: "admin-overview" },
       {
-        icon: <UserCircleIcon />,
+        icon: <Users size={18} />,
         name: "Staff Management",
         path: "/staff-management",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <School size={18} />,
         name: "Classroom & Subject Management",
         path: "/class-and-student-management",
       },
-      { icon: <UserCircleIcon />, name: "Gradebook", path: "/gradebook" },
+      { icon: <GraduationCap size={18} />, name: "Gradebook", path: "/gradebook" },
       {
-        icon: <UserCircleIcon />,
+        icon: <CalendarClock size={18} />,
         name: "Examinations & Timetable",
         path: "/timetable-and-exams",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <CheckCircle size={18} />,
         name: "Attendance Tracking",
         path: "/attendance-tracking",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <DollarSign size={18} />,
         name: "Fee Management",
         path: "/fee-management",
       },
-      { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
+      { icon: <User size={18} />, name: "User Profile", path: "/profile" },
       {
-        icon: <UserCircleIcon />,
+        icon: <Settings size={18} />,
         name: "System Settings",
         path: "/system-settings",
       },
@@ -113,40 +107,35 @@ const getNavItems = (): NavItem[] => {
   } else if (UserLoggedInIs === "teacher") {
     return [
       {
-        icon: <UserCircleIcon />,
+        icon: <LayoutDashboard size={18} />,
         name: "Overview",
         path: "/professor-overview",
       },
       {
-        icon: <CalenderIcon />,
+        icon: <CalendarClock size={18} />,
         name: "TimeTable",
         path: "/timetable-professor",
       },
       {
-        icon: <UserCircleIcon />,
+        icon: <BookOpen size={18} />,
         name: "Courses",
         subItems: TeacherCourses.map((course) => ({
-          icon: course.icon,
+          icon: course.icon || <GraduationCap size={18} />,
           name: course.name,
           path: course.path,
         })),
       },
       {
-        icon: <CalenderIcon />,
+        icon: <ClipboardCheck size={18} />,
         name: "Grading & Assessment",
-        path: "/grading",
+        path: "/assignments-grade",
       },
       {
-        icon: <CalenderIcon />,
+        icon: <MessageSquare size={18} />,
         name: "Queries & Feedback",
         path: "/queries-and-feedback",
       },
-      {
-        icon: <CalenderIcon />,
-        name: "Results submission",
-        path: "/result-submission",
-      },
-      { icon: <UserCircleIcon />, name: "User Profile", path: "/profile" },
+      { icon: <User size={18} />, name: "User Profile", path: "/profile" },
     ];
   } else if (UserLoggedInIs === "student") {
     return [

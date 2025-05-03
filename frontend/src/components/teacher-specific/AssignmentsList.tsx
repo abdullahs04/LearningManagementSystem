@@ -57,9 +57,9 @@ export default function AssignmentsList() {
   const pastAssignments = assignments.filter(a => new Date(a.dueDate) <= currentDate);
   const completeSubmissions = assignments.filter(a => a.submissions === a.totalStudents);
 
-  const getFirstThree = (arr) => arr.slice(0, 3);
+  const getFirstThree = <T,>(arr: T[]): T[] => arr.slice(0, 3);
 
-  const EmptyState = ({ type }) => (
+  const EmptyState = ({ type }: { type: string }) => (
     <div className="p-6 text-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
       <svg
         className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"

@@ -1,15 +1,14 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Users, Clock, GraduationCap } from "lucide-react";
+import { Users, GraduationCap } from "lucide-react";
 
 type CourseCardProps = {
   id: string;
   courseCode: string;
   courseName: string;
   studentsEnrolled: number;
-  credits: number;
 };
 
-function CourseCard({ id, courseCode, courseName, studentsEnrolled, credits }: CourseCardProps) {
+function CourseCard({ id, courseCode, courseName, studentsEnrolled }: CourseCardProps) {
   const navigate = useNavigate();
   const handleClick = () => {
     navigate(`/courses/${id}`);
@@ -41,12 +40,6 @@ function CourseCard({ id, courseCode, courseName, studentsEnrolled, credits }: C
           <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-800 font-mono text-sm dark:bg-gray-700 dark:text-gray-200">
             {courseCode}
           </span>
-          <div className="flex items-center">
-            <Clock size={16} className="text-gray-500 dark:text-gray-400" />
-            <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-              {credits} {credits === 1 ? "Credit" : "Credits"}
-            </span>
-          </div>
         </div>
         
         <h3 className="mt-4 text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2 dark:text-white dark:group-hover:text-blue-400">

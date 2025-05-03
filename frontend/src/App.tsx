@@ -33,8 +33,7 @@ import TimetableAndExams from "./pages/admin-dashboard/TimetableAndExams";
 // Professor Pages
 import ProfessorOverview from "./pages/teacher-dashboard/Overview";
 import TimeTableProfessor from "./pages/teacher-dashboard/TimeTable";
-import Grading from "./pages/teacher-dashboard/Grading";
-import ResultSubmission from "./pages/teacher-dashboard/ResultSubmission";
+import GradingAndAssessments from "./pages/teacher-dashboard/GradingAndAssessments";
 import QueriesAndFeedback from "./pages/teacher-dashboard/QuriesAndFeedback";
 
 // Student Pages
@@ -89,8 +88,7 @@ export default function App() {
             {/* Professor Pages */}
             <Route path="/professor-overview" element={<ProfessorOverview />} />
             <Route path="/timetable-professor" element={<TimeTableProfessor />} />
-            <Route path="/grading" element={<Grading />} />
-            <Route path="/result-submission" element={<ResultSubmission />} />
+            <Route path="/assignments-grade" element={<GradingAndAssessments />} />
             <Route path="/queries-and-feedback" element={<QueriesAndFeedback />} />
             {/* Admin Pages */}
             <Route path="/admin-overview" element={<AdminOverview />} />
