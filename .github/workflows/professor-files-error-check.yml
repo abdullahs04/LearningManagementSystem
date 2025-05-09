@@ -1,0 +1,42 @@
+name: Professor Files Error Check
+
+on:
+  push:
+    paths:
+      - 'frontend/src/pages/teacher-dashboard/TimeTable.tsx'
+      - 'frontend/src/pages/teacher-dashboard/QuriesAndFeedback.tsx'
+      - 'frontend/src/pages/teacher-dashboard/Overview.tsx'
+      - 'frontend/src/pages/teacher-dashboard/GradingAndAssessments.tsx'
+  pull_request:
+    paths:
+      - 'frontend/src/pages/teacher-dashboard/TimeTable.tsx'
+      - 'frontend/src/pages/teacher-dashboard/QuriesAndFeedback.tsx'
+      - 'frontend/src/pages/teacher-dashboard/Overview.tsx'
+      - 'frontend/src/pages/teacher-dashboard/GradingAndAssessments.tsx'
+
+jobs:
+  check-student-files:
+    name: Check Student Files for Errors
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Make script executable
+        run: chmod +x check-Professor-files.sh
+      
+      - name: Run Professor files check script
+        run: ./check-Professor-files.sh

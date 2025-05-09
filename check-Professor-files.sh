@@ -1,18 +1,17 @@
 #!/bin/bash
 
-# Script to check specific student files for TypeScript errors
+# Script to check specific professor files for TypeScript errors
 # Ignoring specific configuration warnings
 
-echo "Checking student-specific files for errors..."
+echo "Checking professor-specific files for errors..."
 
 cd frontend || { echo "Error: frontend directory not found"; exit 1; }
 
 FILES_TO_CHECK=(
-  "src/pages/student-specific/AttendanceRecords.tsx"
-  "src/pages/student-specific/Feedback.tsx"
-  "src/pages/student-specific/Grades.tsx"
-  "src/pages/student-specific/Overview.tsx"
-  "src/pages/student-specific/TimeTable.tsx"
+  "src/pages/teacher-dashboard/TimeTable.tsx"
+  "src/pages/teacher-dashboard/QuriesAndFeedback.tsx"
+  "src/pages/teacher-dashboard/Overview.tsx"
+  "src/pages/teacher-dashboard/GradingAndAssessments.tsx"
 )
 
 ERROR_FOUND=0
@@ -33,7 +32,7 @@ for file in "${FILES_TO_CHECK[@]}"; do
       grep -v "is not a valid JSX element type" | \
       grep -v "is not assignable to type 'new (props: any) => Component<any, any, any>'" | \
       grep -v "is missing the following properties from type 'Component<any, any, any>'")
-      
+    
     if [ -n "$ERROR_OUTPUT" ]; then
       ERROR_FOUND=1
       echo -e "\033[0;31m❌ Errors found in $file:\033[0m"
@@ -49,7 +48,7 @@ for file in "${FILES_TO_CHECK[@]}"; do
 done
 
 if [ $ERROR_FOUND -eq 0 ]; then
-  echo -e "\n\033[0;32m✅ All student files passed validation!\033[0m"
+  echo -e "\n\033[0;32m✅ All professor files passed validation!\033[0m"
   exit 0
 else
   echo -e "\n\033[0;31m❌ Errors found in the following files:$ERROR_LIST\033[0m"

@@ -2,7 +2,19 @@ name: Student Files Error Check
 
 on:
   push:
+    paths:
+      - 'frontend/src/pages/student-specific/AttendanceRecords.tsx'
+      - 'frontend/src/pages/student-specific/Feedback.tsx'
+      - 'frontend/src/pages/student-specific/Grades.tsx'
+      - 'frontend/src/pages/student-specific/Overview.tsx'
+      - 'frontend/src/pages/student-specific/TimeTable.tsx'
   pull_request:
+    paths:
+      - 'frontend/src/pages/student-specific/AttendanceRecords.tsx'
+      - 'frontend/src/pages/student-specific/Feedback.tsx'
+      - 'frontend/src/pages/student-specific/Grades.tsx'
+      - 'frontend/src/pages/student-specific/Overview.tsx'
+      - 'frontend/src/pages/student-specific/TimeTable.tsx'
 
 jobs:
   check-student-files:

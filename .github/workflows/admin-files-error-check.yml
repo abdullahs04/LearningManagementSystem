@@ -1,0 +1,51 @@
+name: Admin Files Error Check
+
+on:
+  push:
+    paths:
+      - 'frontend/src/pages/admin-dashboard/AttendanceRecords.tsx'
+      - 'frontend/src/pages/admin-dashboard/classAndSubmanagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/FeeManagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/gradebook.tsx'
+      - 'frontend/src/pages/admin-dashboard/Overview.tsx'
+      - 'frontend/src/pages/admin-dashboard/staffManagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/SystemSettings.tsx'
+      - 'frontend/src/pages/admin-dashboard/TimetableAndExams.tsx'
+      
+  pull_request:
+    paths:
+      - 'frontend/src/pages/admin-dashboard/AttendanceRecords.tsx'
+      - 'frontend/src/pages/admin-dashboard/classAndSubmanagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/FeeManagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/gradebook.tsx'
+      - 'frontend/src/pages/admin-dashboard/Overview.tsx'
+      - 'frontend/src/pages/admin-dashboard/staffManagement.tsx'
+      - 'frontend/src/pages/admin-dashboard/SystemSettings.tsx'
+      - 'frontend/src/pages/admin-dashboard/TimetableAndExams.tsx'
+
+jobs:
+  check-student-files:
+    name: Check Student Files for Errors
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Make script executable
+        run: chmod +x check-admin-files.sh
+      
+      - name: Run Admin files check script
+        run: ./check-admin-files.sh
