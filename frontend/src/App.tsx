@@ -43,6 +43,8 @@ import AttendanceRecords from "./pages/student-specific/AttendanceRecords";
 import Feedback from "./pages/student-specific/Feedback";
 import Grades from "./pages/student-specific/Grades";
 
+import CoursePage from "./pages/Courses";
+
 // TODO: this will read from the struct saved
 const someOneLoggedIn = true;
 
@@ -66,6 +68,9 @@ export default function App() {
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
+
+            <Route path="/courses" element={<CoursePage />} />
+            <Route path="/course/:courseId" element={<CoursePage />} />
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />

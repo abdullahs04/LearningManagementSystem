@@ -1,0 +1,32 @@
+name: Student Files Error Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-student-files:
+    name: Check Student Files for Errors
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      
+      - name: Make script executable
+        run: chmod +x check-student-files.sh
+      
+      - name: Run student files check script
+        run: ./check-student-files.sh

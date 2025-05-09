@@ -8,7 +8,7 @@ import PageMeta from "../../components/common/PageMeta";
 
 export default function FeeManagement() {
   const { isOpen, openModal, closeModal } = useModal();
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState<FeeCategory | null>(null);
   
   // Fee management data
   const feeStatistics = {
@@ -107,15 +107,41 @@ export default function FeeManagement() {
         { name: "Annual Projections", value: "View forecast", type: "complex" },
         { name: "Generate Reports", value: "Export", type: "button" }
       ]
+    },
+    {
+      id: 7,
+      name: "Fine Management",
+      icon: "⚖️",
+      status: "active",
+      lastUpdated: "2023-11-16",
+      items: [
+        { name: "Late Fee Fines", value: "₹123,450 collected", type: "info" },
+        { name: "Disciplinary Fines", value: "₹45,600 collected", type: "info" },
+        { name: "Pending Fines", value: "₹12,300 pending", type: "action" },
+        { name: "New Fine", value: "Add", type: "button" }
+      ]
     }
   ];
 
-  const handleOpenModal = (category) => {
+  type FeeCategory = {
+    id: number;
+    name: string;
+    icon: string;
+    status: string;
+    lastUpdated: string;
+    items: {
+      name: string;
+      value: string;
+      type: string;
+    }[];
+  };
+
+  const handleOpenModal = (category: FeeCategory) => {
     setSelectedCategory(category);
     openModal();
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     if (status === "active") {
       return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">Active</span>;
     } else if (status === "pending") {
@@ -334,7 +360,34 @@ export default function FeeManagement() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+
+      {/* Category Detail Modal */}
+      {selectedCategory && (
+        <Modal isOpen={isOpen} onClose={closeModal}>
+          <div className="max-h-[80vh] overflow-y-auto p-6">
+            {renderCategoryDetails()}
+          </div>
+          <div className="flex justify-end gap-4 border-t border-gray-200 p-4 dark:border-gray-700">
+            <Button
+              onClick={closeModal}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={closeModal}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+            >
+              Save Changes
+            </Button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+/*
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] lg:p-6">
         <h2 className="text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Common fee management tasks</p>
@@ -362,28 +415,4 @@ export default function FeeManagement() {
         </div>
       </div>
 
-      {/* Category Detail Modal */}
-      {selectedCategory && (
-        <Modal isOpen={isOpen} onClose={closeModal}>
-          <div className="max-h-[80vh] overflow-y-auto p-6">
-            {renderCategoryDetails()}
-          </div>
-          <div className="flex justify-end gap-4 border-t border-gray-200 p-4 dark:border-gray-700">
-            <Button
-              onClick={closeModal}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={closeModal}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-            >
-              Save Changes
-            </Button>
-          </div>
-        </Modal>
-      )}
-    </>
-  );
-}
+*/

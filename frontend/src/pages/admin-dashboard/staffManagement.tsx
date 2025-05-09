@@ -12,20 +12,34 @@ export default function StaffManagement() {
   ]);
   const [searchQuery, setSearchQuery] = useState("");
   const { isOpen, openModal, closeModal } = useModal();
-  const [newStaff, setNewStaff] = useState({ name: "", role: "", contact: "" });
+  const [newStaff, setNewStaff] = useState({ name: "", role: "", customRole: "", contact: "" });
+  const [selectedRole, setSelectedRole] = useState("Teacher");
 
   const handleAddStaff = () => {
+    setSelectedRole("Teacher");
+    setNewStaff({ name: "", role: "Teacher", customRole: "", contact: "" });
     openModal();
   };
 
   const handleSaveStaff = () => {
-    const staffToAdd = { ...newStaff, id: Date.now() };
+    const roleToSave = selectedRole === "Other" ? newStaff.customRole : selectedRole;
+    const staffToAdd = { 
+      ...newStaff, 
+      role: roleToSave,
+      id: Date.now() 
+    };
     setStaff([...staff, staffToAdd]);
-    setNewStaff({ name: "", role: "", contact: "" });
+    setNewStaff({ name: "", role: "", customRole: "", contact: "" });
     closeModal();
   };
 
-  const handleRemoveStaff = (id) => {
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const role = e.target.value;
+    setSelectedRole(role);
+    setNewStaff({ ...newStaff, role: role });
+  };
+
+  const handleRemoveStaff = (id: number) => {
     setStaff(staff.filter((member) => member.id !== id));
   };
 
@@ -108,7 +122,7 @@ export default function StaffManagement() {
       </div>
 
       {/* New Staff Modal */}
-      <Modal isOpen={isOpen} onClose={closeModal} size="lg">
+      <Modal isOpen={isOpen} onClose={closeModal}>
         <div className="p-4 sm:p-6">
           <div className="mb-4 sm:mb-6">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
@@ -127,13 +141,29 @@ export default function StaffManagement() {
               onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
               className="w-full rounded-lg border border-gray-300 p-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
-            <input
-              type="text"
-              placeholder="Role"
-              value={newStaff.role}
-              onChange={(e) => setNewStaff({ ...newStaff, role: e.target.value })}
-              className="w-full rounded-lg border border-gray-300 p-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            />
+            
+            <div className="space-y-2">
+              <select
+                value={selectedRole}
+                onChange={handleRoleChange}
+                className="w-full rounded-lg border border-gray-300 p-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              >
+                <option value="Admin">Admin</option>
+                <option value="Teacher">Teacher</option>
+                <option value="Other">Other</option>
+              </select>
+              
+              {selectedRole === "Other" && (
+                <input
+                  type="text"
+                  placeholder="Specify Role"
+                  value={newStaff.customRole}
+                  onChange={(e) => setNewStaff({ ...newStaff, customRole: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 p-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              )}
+            </div>
+            
             <input
               type="email"
               placeholder="Contact"

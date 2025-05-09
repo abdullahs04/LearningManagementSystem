@@ -48,7 +48,7 @@ interface Course {
 
 export default function AttendanceTracking() {
   // States
-  const [activeTab, setActiveTab] = useState<'students' | 'staff'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'staff' | 'general'>('students');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
@@ -56,13 +56,16 @@ export default function AttendanceTracking() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [dateFilter, setDateFilter] = useState<string>("");
+  const [dateFilter, setDateFilter] = useState<string>(new Date().toISOString().split('T')[0]);
+  //const [isAttendanceMarkingOpen, setIsAttendanceMarkingOpen] = useState(false);
+  //const [unmarkedOnly, setUnmarkedOnly] = useState(true);
   
   // Modal hooks
   const courseDetailsModal = useModal();
   const studentDetailsModal = useModal();
   const staffDetailsModal = useModal();
   const bulkUploadModal = useModal();
+  //const attendanceMarkingModal = useModal();
 
   // Sample data - would be replaced with API calls in a real application
   const courses: Course[] = [
@@ -372,7 +375,7 @@ export default function AttendanceTracking() {
                     label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   >
                     {staffAttendanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${entry.name}-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -386,7 +389,7 @@ export default function AttendanceTracking() {
         {/* Tabs for Students and Staff Attendance */}
         <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <div className="p-5 lg:p-6">
-            <Tab.Group onChange={(index) => setActiveTab(index === 0 ? 'students' : 'staff')}>
+            <Tab.Group onChange={(index) => setActiveTab(index === 0 ? 'students' : index === 1 ? 'staff' : 'general')}>
               <Tab.List className="flex space-x-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
                 <Tab
                   className={({ selected }) =>
@@ -410,6 +413,17 @@ export default function AttendanceTracking() {
                 >
                   Staff Attendance
                 </Tab>
+                <Tab
+                  className={({ selected }) =>
+                    `w-full py-2.5 text-sm font-medium leading-5 rounded-lg transition-colors
+                    ${selected 
+                      ? 'bg-white text-blue-700 shadow dark:bg-gray-700 dark:text-blue-400' 
+                      : 'text-gray-700 hover:bg-white/[0.12] dark:text-gray-400 dark:hover:bg-gray-700/[0.5]'
+                    }`
+                  }
+                >
+                  General Attendance
+                </Tab>
               </Tab.List>
               
               {/* Filter and search controls */}
@@ -418,7 +432,7 @@ export default function AttendanceTracking() {
                   <input
                     type="text"
                     className="w-full rounded-lg border border-gray-300 p-2.5 pl-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
-                    placeholder={activeTab === 'students' ? "Search courses..." : "Search staff..."}
+                    placeholder={activeTab === 'students' ? "Search courses..." : activeTab === 'staff' ? "Search staff..." : "Search..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -582,6 +596,71 @@ export default function AttendanceTracking() {
                     </table>
                   </div>
                 </Tab.Panel>
+
+                {/* General attendance panel */}
+                <Tab.Panel>
+                  <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Name
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Department
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Attendance Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                        {filteredCourses.flatMap(course => course.students).map((student) => (
+                          <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                            <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900 dark:text-white">
+                              {student.name}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-gray-500 dark:text-gray-400">
+                              <span className="rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                                {student.registrationNo}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-gray-500 dark:text-gray-400">
+                              {courses.find(course => course.students.includes(student))?.department}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-24 rounded-full bg-gray-200 dark:bg-gray-700">
+                                  <div 
+                                    className="h-2 rounded-full bg-blue-600 dark:bg-blue-500" 
+                                    style={{ width: `${getAttendancePercentage(student.attendanceRecords)}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {getAttendancePercentage(student.attendanceRecords)}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-right">
+                              <Button
+                                onClick={() => handleStudentSelect(student)}
+                                className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                              >
+                                View Details
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Tab.Panel>
               </Tab.Panels>
             </Tab.Group>
           </div>
@@ -590,7 +669,7 @@ export default function AttendanceTracking() {
 
       {/* Course Attendance Modal */}
       {selectedCourse && (
-        <Modal isOpen={courseDetailsModal.isOpen} onClose={courseDetailsModal.closeModal} size="xl">
+        <Modal isOpen={courseDetailsModal.isOpen} onClose={courseDetailsModal.closeModal}>
           <div className="p-6">
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -712,7 +791,7 @@ export default function AttendanceTracking() {
 
       {/* Student Attendance Details Modal */}
       {selectedStudent && (
-        <Modal isOpen={studentDetailsModal.isOpen} onClose={studentDetailsModal.closeModal} size="lg">
+        <Modal isOpen={studentDetailsModal.isOpen} onClose={studentDetailsModal.closeModal}>
           <div className="p-6">
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -829,7 +908,7 @@ export default function AttendanceTracking() {
 
       {/* Staff Attendance Details Modal */}
       {selectedStaff && (
-        <Modal isOpen={staffDetailsModal.isOpen} onClose={staffDetailsModal.closeModal} size="lg">
+        <Modal isOpen={staffDetailsModal.isOpen} onClose={staffDetailsModal.closeModal}>
           <div className="p-6">
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -939,7 +1018,7 @@ export default function AttendanceTracking() {
       )}
       
       {/* Bulk Upload Modal */}
-      <Modal isOpen={bulkUploadModal.isOpen} onClose={bulkUploadModal.closeModal} size="md">
+      <Modal isOpen={bulkUploadModal.isOpen} onClose={bulkUploadModal.closeModal}>
         <div className="p-6">
           <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Bulk Upload Attendance
@@ -1011,7 +1090,7 @@ export default function AttendanceTracking() {
       </Modal>
       
       {/* Edit Record Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} size="md">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
         <div className="p-6">
           <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Edit Attendance Record
@@ -1067,7 +1146,7 @@ export default function AttendanceTracking() {
       </Modal>
       
       {/* Add Class Modal */}
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} size="md">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
         <div className="p-6">
           <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Add New Class
