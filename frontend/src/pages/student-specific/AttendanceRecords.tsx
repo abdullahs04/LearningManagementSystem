@@ -3,69 +3,61 @@ import PageMeta from "../../components/common/PageMeta";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../../components/ui/modal";
 import Button from "../../components/ui/button/Button";
+import { useEffect } from "react";
+
 
 export default function AttendanceRecords() {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const { isOpen, openModal, closeModal } = useModal();
 
-  // Sample courses data - replace with your actual data source
-  const courses = [
-    {
-      id: 1,
-      code: "CS101",
-      name: "Introduction to Computer Science",
-      totalClasses: 16,
-      attendedClasses: 14,
-    },
-    {
-      id: 2,
-      code: "MATH201",
-      name: "Calculus II",
-      totalClasses: 18,
-      attendedClasses: 15,
-    },
-    {
-      id: 3,
-      code: "PHY102",
-      name: "Physics for Engineers",
-      totalClasses: 14,
-      attendedClasses: 12,
-    },
-    {
-      id: 4,
-      code: "ENG105",
-      name: "Technical Writing",
-      totalClasses: 12,
-      attendedClasses: 10,
-    },
-    {
-      id: 5,
-      code: "CHEM101",
-      name: "General Chemistry",
-      totalClasses: 15,
-      attendedClasses: 11,
-    },
-  ];
+  const [courses, setCourses] = useState<any[]>([]);
+  const [classAttendance, setClassAttendance] = useState<any[]>([]);
 
-  // Sample detailed attendance for a course
-  const classAttendance = [
-    { classNo: 1, date: "2025-01-15", status: "present" },
-    { classNo: 2, date: "2025-01-22", status: "present" },
-    { classNo: 3, date: "2025-01-29", status: "absent" },
-    { classNo: 4, date: "2025-02-05", status: "present" },
-    { classNo: 5, date: "2025-02-12", status: "present" },
-    { classNo: 6, date: "2025-02-19", status: "leave" },
-    { classNo: 7, date: "2025-02-26", status: "present" },
-    { classNo: 8, date: "2025-03-05", status: "present" },
-    { classNo: 9, date: "2025-03-12", status: "present" },
-    { classNo: 10, date: "2025-03-19", status: "absent" },
-    { classNo: 11, date: "2025-03-26", status: "present" },
-    { classNo: 12, date: "2025-04-02", status: "present" },
-  ];
+  const rfid = "6323678"; 
+  useEffect(() => {
+    fetch(`http://193.203.162.232:10000/StudentAttendance/get_courses?rfid=${rfid}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error && !data.message) {
+          const formatted = data.map((course: any) => ({
+            id: course.subject_id,
+            code: course.subject_id,
+            name: course.subject_name,
+            teacher: course.teacher_name,
+            totalClasses: course.total_classes,
+            attendedClasses: course.subject_attended,
+          }));
+          setCourses(formatted);
+        }
+      })
+      .catch(err => console.error("Error loading courses:", err));
+  }, []);
+
+  const handleCourseClick = (course: any) => {
+    setSelectedCourse(course);
+    openModal();
+
+    fetch(`http://193.203.162.232:10000/StudentAttendance/get_attendance_subject?rfid=${rfid}&subject_id=${course.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.error && !data.message) {
+          const formatted = data.map((record: any, index: number) => ({
+            classNo: index + 1,
+            date: record.date,
+            status: record.status,
+          }));
+          setClassAttendance(formatted);
+        } else {
+          setClassAttendance([]); 
+        }
+      })
+      .catch(err => console.error("Error loading attendance:", err));
+  };
 
   const getAttendancePercentage = (attended: number, total: number): number => {
     return Math.round((attended / total) * 100);
   };
+
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -80,10 +72,7 @@ export default function AttendanceRecords() {
     }
   };
 
-  const handleCourseSelect = (course: any) => {
-    setSelectedCourse(course);
-    openModal();
-  };
+
 
   return (
     <>
@@ -188,7 +177,7 @@ export default function AttendanceRecords() {
                       </div>
                     </div>
                     <Button
-                      onClick={() => handleCourseSelect(course)}
+                      onClick={() => handleCourseClick(course)}
                       className="ml-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
                     >
                       View Details

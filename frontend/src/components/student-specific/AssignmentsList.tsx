@@ -1,184 +1,67 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-// Define interfaces for the assignment data structure
+
+interface Attachment {
+  file_id: number;
+  file_name: string;
+  file_path: string;
+}
+
 interface Assignment {
-  id: number;
+  assignment_id: number;
+  subject_id: number;
+  subject_name: string;
   title: string;
-  course: string;
-  dueDate: string;
-  status: "pending" | "completed" | "overdue";
+  description: string;
+  due_date: string;
+  posted_date: string;
+  status: "upcoming" | "active" | "submitted" | "graded";
+  attachments: Attachment[];
 }
 
 export default function AssignmentsList() {
-  const assignments: Assignment[] = [
-    {
-      id: 1,
-      title: "Software Engineering Principles", 
-      course: "CS401",
-      dueDate: "2023-06-15",
-      status: "pending",
-    },
-    {
-      id: 2,
-      title: "Database Design Project",
-      course: "CS302",
-      dueDate: "2023-06-10",
-      status: "pending",
-    },
-    {
-      id: 3,
-      title: "UI/UX Case Study",
-      course: "CS405",
-      dueDate: "2023-05-25",
-      status: "overdue",
-    },
-    {
-      id: 4,
-      title: "Algorithm Analysis",
-      course: "CS301",
-      dueDate: "2023-05-28",
-      status: "completed",
-    },
-    {
-      id: 5,
-      title: "Network Security Assessment",
-      course: "CS450",
-      dueDate: "2023-06-20",
-      status: "pending",
-    },
-    {
-      id: 6,
-      title: "Mobile App Development",
-      course: "CS410",
-      dueDate: "2023-06-18",
-      status: "pending",
-    },
-    {
-      id: 7,
-      title: "Data Structures Implementation",
-      course: "CS201",
-      dueDate: "2023-05-20",
-      status: "overdue",
-    },
-    {
-      id: 8,
-      title: "Machine Learning Models",
-      course: "CS460",
-      dueDate: "2023-06-25",
-      status: "pending",
-    },
-    {
-      id: 9,
-      title: "Operating Systems Project",
-      course: "CS350",
-      dueDate: "2023-05-15",
-      status: "completed",
-    },
-    {
-      id: 10,
-      title: "Web Development Framework",
-      course: "CS415",
-      dueDate: "2023-06-12",
-      status: "pending",
-    },
-    {
-      id: 11,
-      title: "Computer Graphics Rendering",
-      course: "CS430",
-      dueDate: "2023-05-18",
-      status: "completed",
-    },
-    {
-      id: 12,
-      title: "Artificial Intelligence Ethics",
-      course: "CS480",
-      dueDate: "2023-06-30",
-      status: "pending",
-    },
-    {
-      id: 13,
-      title: "Cloud Computing Architecture",
-      course: "CS470",
-      dueDate: "2023-06-08",
-      status: "pending",
-    },
-    {
-      id: 14,
-      title: "Quantum Computing Basics",
-      course: "CS490",
-      dueDate: "2023-05-22",
-      status: "overdue",
-    },
-    {
-      id: 15,
-      title: "Software Testing Methods",
-      course: "CS402",
-      dueDate: "2023-05-10",
-      status: "completed",
-    },
-    {
-      id: 16,
-      title: "Cybersecurity Analysis",
-      course: "CS455",
-      dueDate: "2023-06-22",
-      status: "pending",
-    },
-    {
-      id: 17,
-      title: "Embedded Systems Programming",
-      course: "CS420",
-      dueDate: "2023-06-05",
-      status: "completed",
-    },
-    {
-      id: 18,
-      title: "Big Data Analytics",
-      course: "CS475",
-      dueDate: "2023-05-30",
-      status: "overdue",
-    },
-    {
-      id: 19,
-      title: "Blockchain Technology",
-      course: "CS485",
-      dueDate: "2023-06-28",
-      status: "pending",
-    },
-    {
-      id: 20,
-      title: "Human-Computer Interaction",
-      course: "CS408",
-      dueDate: "2023-05-12",
-      status: "completed",
-    },
-    {
-      id: 21,
-      title: "Virtual Reality Development",
-      course: "CS432",
-      dueDate: "2023-06-17",
-      status: "pending",
-    },
-    {
-      id: 22,
-      title: "Compiler Design",
-      course: "CS440",
-      dueDate: "2023-05-14",
-      status: "completed",
-    }
-  ];
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const pendingAssignments = assignments.filter(a => a.status === "pending");
-  const completedAssignments = assignments.filter(a => a.status === "completed");
-  const overdueAssignments = assignments.filter(a => a.status === "overdue");
 
-  // Fixed the "arr" parameter type
+  const studentRfid = "6323678";
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const response = await axios.get(
+          `http://193.203.162.232:10000/assignments/get_assignment?student_rfid=${studentRfid}`
+        );
+        setAssignments(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load assignments");
+        setLoading(false);
+        console.error("Error fetching assignments:", err);
+      }
+    };
+
+    fetchAssignments();
+  }, []);
+
+  const upcomingAssignments = assignments.filter(
+    (a) => a.status === "upcoming"
+  );
+  const activeAssignments = assignments.filter((a) => a.status === "active");
+  const submittedAssignments = assignments.filter(
+    (a) => a.status === "submitted"
+  );
+  const gradedAssignments = assignments.filter((a) => a.status === "graded");
+
   const getFirstThree = (arr: Assignment[]): Assignment[] => arr.slice(0, 3);
 
-  // Fixed the "status" parameter type
   interface EmptyStateProps {
     status: string;
   }
-  
+
   const EmptyState = ({ status }: EmptyStateProps) => (
     <div className="p-6 text-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
       <svg
@@ -199,14 +82,68 @@ export default function AssignmentsList() {
         No {status} assignments
       </h3>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        {status === "pending"
-          ? "You're all caught up! No pending assignments right now."
-          : status === "completed"
-          ? "No assignments have been completed yet."
-          : "Great job! You have no overdue assignments."}
+        {status === "active"
+          ? "You're all caught up! No active assignments right now."
+          : status === "upcoming"
+          ? "No upcoming assignments found."
+          : status === "submitted"
+          ? "No assignments have been submitted yet."
+          : "No assignments have been graded yet."}
       </p>
     </div>
   );
+
+  const getStatusBadge = (status: string, dueDate: string) => {
+    const dueDateObj = new Date(dueDate);
+    const today = new Date();
+    
+    switch (status) {
+      case "upcoming":
+        return (
+          <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap ml-2 flex-shrink-0">
+            Due {dueDateObj.toLocaleDateString()}
+          </span>
+        );
+      case "active":
+        return (
+          <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap ml-2 flex-shrink-0">
+            Due {dueDateObj.toLocaleDateString()}
+          </span>
+        );
+      case "submitted":
+        return (
+          <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap ml-2 flex-shrink-0">
+            Submitted
+          </span>
+        );
+      case "graded":
+        return (
+          <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900/30 dark:text-purple-400 whitespace-nowrap ml-2 flex-shrink-0">
+            Graded
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
+        <div className="text-center p-6 text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] sm:p-6">
@@ -216,122 +153,190 @@ export default function AssignmentsList() {
             My Assignments
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Track your pending and completed assignments
+            Track your assignments by status
           </p>
         </div>
-        <Link to="/assignments" className="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors">
+        <Link
+          to="/assignments"
+          className="px-4 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors"
+        >
           View All Assignments
         </Link>
       </div>
 
-      {/* Pending Assignments */}
+      {/* Active Assignments */}
       <div className="mt-6">
         <div className="flex justify-between items-center mb-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Pending Assignments ({pendingAssignments.length})
+            Active Assignments ({activeAssignments.length})
           </h4>
-          {pendingAssignments.length > 3 && (
-            <Link 
-              to="/assignments?status=pending" 
+          {activeAssignments.length > 3 && (
+            <Link
+              to="/assignments?status=active"
               className="text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400"
             >
-              View all pending
+              View all active
             </Link>
           )}
         </div>
         <div className="space-y-4">
-          {pendingAssignments.length > 0 ? (
-            getFirstThree(pendingAssignments).map((assignment: Assignment) => (
-              <Link 
-                key={assignment.id}
-                to={`/assignments/${assignment.id}`}
+          {activeAssignments.length > 0 ? (
+            getFirstThree(activeAssignments).map((assignment) => (
+              <Link
+                key={assignment.assignment_id}
+                to={`/assignments/${assignment.assignment_id}`}
                 className="block p-4 border border-gray-200 rounded-lg dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h5 className="font-medium text-gray-800 dark:text-white/90">{assignment.title}</h5>
-                  <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded-full dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap ml-2 flex-shrink-0">
-                    Due {new Date(assignment.dueDate).toLocaleDateString()}
-                  </span>
+                  <h5 className="font-medium text-gray-800 dark:text-white/90">
+                    {assignment.title}
+                  </h5>
+                  {getStatusBadge(assignment.status, assignment.due_date)}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{assignment.course}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {assignment.subject_name}
+                </p>
+                {assignment.attachments.length > 0 && (
+                  <div className="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                    {assignment.attachments.length} attachment
+                    {assignment.attachments.length !== 1 ? "s" : ""}
+                  </div>
+                )}
               </Link>
             ))
           ) : (
-            <EmptyState status="pending" />
+            <EmptyState status="active" />
           )}
         </div>
       </div>
 
-      {/* Overdue Assignments */}
-      {overdueAssignments.length > 0 && (
+      {/* Upcoming Assignments */}
+      {upcomingAssignments.length > 0 && (
         <div className="mt-6">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Overdue Assignments ({overdueAssignments.length})
+              Upcoming Assignments ({upcomingAssignments.length})
             </h4>
-            {overdueAssignments.length > 3 && (
-              <Link 
-                to="/assignments?status=overdue" 
+            {upcomingAssignments.length > 3 && (
+              <Link
+                to="/assignments?status=upcoming"
                 className="text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400"
               >
-                View all overdue
+                View all upcoming
               </Link>
             )}
           </div>
           <div className="space-y-4">
-            {getFirstThree(overdueAssignments).map((assignment: Assignment) => (
-              <Link 
-                key={assignment.id}
-                to={`/assignments/${assignment.id}`}
-                className="block p-4 border border-red-200 rounded-lg dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            {getFirstThree(upcomingAssignments).map((assignment) => (
+              <Link
+                key={assignment.assignment_id}
+                to={`/assignments/${assignment.assignment_id}`}
+                className="block p-4 border border-blue-200 rounded-lg dark:border-blue-900 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h5 className="font-medium text-gray-800 dark:text-white/90">{assignment.title}</h5>
-                  <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap ml-2 flex-shrink-0">
-                    Due date passed ({new Date(assignment.dueDate).toLocaleDateString()})
-                  </span>
+                  <h5 className="font-medium text-gray-800 dark:text-white/90">
+                    {assignment.title}
+                  </h5>
+                  {getStatusBadge(assignment.status, assignment.due_date)}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{assignment.course}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {assignment.subject_name}
+                </p>
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* Completed Assignments */}
+      {/* Submitted Assignments */}
       <div className="mt-6">
         <div className="flex justify-between items-center mb-3">
           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Completed Assignments ({completedAssignments.length})
+            Submitted Assignments ({submittedAssignments.length})
           </h4>
-          {completedAssignments.length > 3 && (
-            <Link 
-              to="/assignments?status=completed" 
+          {submittedAssignments.length > 3 && (
+            <Link
+              to="/assignments?status=submitted"
               className="text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400"
             >
-              View all completed
+              View all submitted
             </Link>
           )}
         </div>
         <div className="space-y-4">
-          {completedAssignments.length > 0 ? (
-            getFirstThree(completedAssignments).map((assignment: Assignment) => (
-              <Link 
-                key={assignment.id}
-                to={`/assignments/${assignment.id}`}
-                className="block p-4 border border-gray-200 rounded-lg dark:border-gray-700 opacity-75 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          {submittedAssignments.length > 0 ? (
+            getFirstThree(submittedAssignments).map((assignment) => (
+              <Link
+                key={assignment.assignment_id}
+                to={`/assignments/${assignment.assignment_id}`}
+                className="block p-4 border border-green-200 rounded-lg dark:border-green-900 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
               >
-                <div className="flex justify-between items-center mb-2">
-                  <h5 className="font-medium text-gray-800 dark:text-white/90">{assignment.title}</h5>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full dark:bg-green-900/30 dark:text-green-400">
-                    Completed
-                  </span>
+                <div className="flex justify-between items-start mb-2">
+                  <h5 className="font-medium text-gray-800 dark:text-white/90">
+                    {assignment.title}
+                  </h5>
+                  {getStatusBadge(assignment.status, assignment.due_date)}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{assignment.course}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {assignment.subject_name}
+                </p>
               </Link>
             ))
           ) : (
-            <EmptyState status="completed" />
+            <EmptyState status="submitted" />
+          )}
+        </div>
+      </div>
+
+      {/* Graded Assignments */}
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-3">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Graded Assignments ({gradedAssignments.length})
+          </h4>
+          {gradedAssignments.length > 3 && (
+            <Link
+              to="/assignments?status=graded"
+              className="text-xs text-brand-500 hover:text-brand-600 dark:hover:text-brand-400"
+            >
+              View all graded
+            </Link>
+          )}
+        </div>
+        <div className="space-y-4">
+          {gradedAssignments.length > 0 ? (
+            getFirstThree(gradedAssignments).map((assignment) => (
+              <Link
+                key={assignment.assignment_id}
+                to={`/assignments/${assignment.assignment_id}`}
+                className="block p-4 border border-purple-200 rounded-lg dark:border-purple-900 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h5 className="font-medium text-gray-800 dark:text-white/90">
+                    {assignment.title}
+                  </h5>
+                  {getStatusBadge(assignment.status, assignment.due_date)}
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {assignment.subject_name}
+                </p>
+              </Link>
+            ))
+          ) : (
+            <EmptyState status="graded" />
           )}
         </div>
       </div>

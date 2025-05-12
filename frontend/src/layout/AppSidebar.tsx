@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
+import axios from "axios";
 
 import {
   BoxCubeIcon,
@@ -27,33 +28,38 @@ import {
 } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 
-// TODO add logic to check which type of user logged in and show the menu accordingly
-const UserLoggedInIs = "student" as "admin" | "teacher" | "student"; // or "user" or "teacher" or "student"
+type UserRole = "admin" | "teacher" | "student";
+const UserLoggedInIs: UserRole = "student"; 
 
-// TODO: the path will be decided later on how to implement,
-//  the course icon and name will be set by the teacher or admin TO BE DECIDED
+type Course = {
+  id: string;
+  name: string;
+  code: string;
+  instructor: string;
+  description: string;
+};
 
-const StudentCourses = [
+const StudentCoursesPlaceholder = [
   {
     name: "Course 1",
     icon: <UserCircleIcon />,
     path: "/course/1",
   },
   {
-    name: "Course 1",
+    name: "Course 2",
     icon: <UserCircleIcon />,
     path: "/courses",
   },
 ];
 
-const TeacherCourses = [
+const TeacherCoursesPlaceholder = [
   {
     name: "Course 1",
     icon: <UserCircleIcon />,
     path: "/course/1",
   },
   {
-    name: "Course 1",
+    name: "Course 2",
     icon: <UserCircleIcon />,
     path: "/courses",
   },
@@ -66,153 +72,194 @@ type NavItem = {
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
-// TODO Define menu items based on user role and also fix the icons
-const getNavItems = (): NavItem[] => {
-  if (UserLoggedInIs === "admin") {
-    return [
-      { icon: <LayoutDashboard size={18} />, name: "Overview", path: "admin-overview" },
-      {
-        icon: <Users size={18} />,
-        name: "Staff Management",
-        path: "/staff-management",
-      },
-      {
-        icon: <School size={18} />,
-        name: "Classroom & Subject Management",
-        path: "/class-and-student-management",
-      },
-      { icon: <GraduationCap size={18} />, name: "Gradebook", path: "/gradebook" },
-      {
-        icon: <CalendarClock size={18} />,
-        name: "Examinations & Timetable",
-        path: "/timetable-and-exams",
-      },
-      {
-        icon: <CheckCircle size={18} />,
-        name: "Attendance Tracking",
-        path: "/attendance-tracking",
-      },
-      {
-        icon: <DollarSign size={18} />,
-        name: "Fee Management",
-        path: "/fee-management",
-      },
-      { icon: <User size={18} />, name: "User Profile", path: "/profile" },
-      {
-        icon: <Settings size={18} />,
-        name: "System Settings",
-        path: "/system-settings",
-      },
-    ];
-  } else if (UserLoggedInIs === "teacher") {
-    return [
-      {
-        icon: <LayoutDashboard size={18} />,
-        name: "Overview",
-        path: "/professor-overview",
-      },
-      {
-        icon: <CalendarClock size={18} />,
-        name: "TimeTable",
-        path: "/timetable-professor",
-      },
-      {
-        icon: <BookOpen size={18} />,
-        name: "Courses",
-        subItems: TeacherCourses.map((course) => ({
-          icon: course.icon || <GraduationCap size={18} />,
-          name: course.name,
-          path: course.path,
-        })),
-      },
-      {
-        icon: <ClipboardCheck size={18} />,
-        name: "Grading & Assessment",
-        path: "/assignments-grade",
-      },
-      {
-        icon: <MessageSquare size={18} />,
-        name: "Queries & Feedback",
-        path: "/queries-and-feedback",
-      },
-      { icon: <User size={18} />, name: "User Profile", path: "/profile" },
-    ];
-  } else if (UserLoggedInIs === "student") {
-    return [
-      {
-        icon: <LayoutDashboard size={18} />,
-        name: "Overview",
-        path: "/student-overview",
-      },
-      {
-        icon: <ClipboardCheck size={18} />,
-        name: "Attendance Record",
-        path: "/attendance-records",
-      },
-      {
-        icon: <BookOpen size={18} />,
-        name: "Courses",
-        subItems: StudentCourses.map((course) => ({
-          icon: course.icon,
-          name: course.name,
-          path: course.path,
-        })),
-      },
-      {
-        icon: <MessageSquare size={18} />,
-        name: "Feedback & Reviews",
-        path: "/feedback",
-      },
-      {
-        icon: <BarChart size={18} />,
-        name: "Results & Grades",
-        path: "/grades",
-      },
-      {
-        icon: <Calendar size={18} />,
-        name: "TimeTable",
-        path: "/timetable-student",
-      },
-      { icon: <User size={18} />, name: "Student Profile", path: "/profile" },
-    ];
-  }
-  return [];
-};
-
-const navItems: NavItem[] = getNavItems();
-
-const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
-  },
-];
-
 const AppSidebar: React.FC = () => {
+  const [studentCourses, setStudentCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [errorCourses, setErrorCourses] = useState<string | null>(null);
+
+  
+  const studentRfid = "6323678"; 
+
+  useEffect(() => {
+    const fetchStudentCourses = async () => {
+      if (UserLoggedInIs !== "student") return;
+      
+      setLoadingCourses(true);
+      setErrorCourses(null);
+      
+      try {
+        const response = await axios.get(
+          `http://193.203.162.232:10000/MyCourses/${studentRfid}/MyCourses`
+        );
+        
+        if (response.data.success) {
+          setStudentCourses(response.data.subjects);
+        } else {
+          setErrorCourses("Failed to load courses");
+        }
+      } catch (error) {
+        setErrorCourses("Error fetching courses");
+        console.error("Error fetching courses:", error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchStudentCourses();
+  }, [studentRfid]);
+
+  const getNavItems = (): NavItem[] => {
+    if (UserLoggedInIs === "admin") {
+      return [
+        { icon: <LayoutDashboard size={18} />, name: "Overview", path: "admin-overview" },
+        {
+          icon: <Users size={18} />,
+          name: "Staff Management",
+          path: "/staff-management",
+        },
+        {
+          icon: <School size={18} />,
+          name: "Classroom & Subject Management",
+          path: "/class-and-student-management",
+        },
+        { icon: <GraduationCap size={18} />, name: "Gradebook", path: "/gradebook" },
+        {
+          icon: <CalendarClock size={18} />,
+          name: "Examinations & Timetable",
+          path: "/timetable-and-exams",
+        },
+        {
+          icon: <CheckCircle size={18} />,
+          name: "Attendance Tracking",
+          path: "/attendance-tracking",
+        },
+        {
+          icon: <DollarSign size={18} />,
+          name: "Fee Management",
+          path: "/fee-management",
+        },
+        { icon: <User size={18} />, name: "User Profile", path: "/profile" },
+        {
+          icon: <Settings size={18} />,
+          name: "System Settings",
+          path: "/system-settings",
+        },
+      ];
+    } else if (UserLoggedInIs === "teacher") {
+      return [
+        {
+          icon: <LayoutDashboard size={18} />,
+          name: "Overview",
+          path: "/professor-overview",
+        },
+        {
+          icon: <CalendarClock size={18} />,
+          name: "TimeTable",
+          path: "/timetable-professor",
+        },
+        {
+          icon: <BookOpen size={18} />,
+          name: "Courses",
+          subItems: TeacherCoursesPlaceholder.map((course) => ({
+            name: course.name,
+            path: course.path,
+          })),
+        },
+        {
+          icon: <ClipboardCheck size={18} />,
+          name: "Grading & Assessment",
+          path: "/assignments-grade",
+        },
+        {
+          icon: <MessageSquare size={18} />,
+          name: "Queries & Feedback",
+          path: "/queries-and-feedback",
+        },
+        { icon: <User size={18} />, name: "User Profile", path: "/profile" },
+      ];
+    } else if (UserLoggedInIs === "student") {
+      return [
+        {
+          icon: <LayoutDashboard size={18} />,
+          name: "Overview",
+          path: "/student-overview",
+        },
+        {
+          icon: <ClipboardCheck size={18} />,
+          name: "Attendance Record",
+          path: "/attendance-records",
+        },
+        {
+          icon: <BookOpen size={18} />,
+          name: "Courses",
+          subItems: loadingCourses
+            ? [{ name: "Loading...", path: "#" }]
+            : errorCourses
+            ? [{ name: "Error loading courses", path: "#" }]
+            : studentCourses.length > 0
+            ? studentCourses.map((course) => ({
+                name: course.name,
+                path: `/course/${course.id}`,
+              }))
+            : StudentCoursesPlaceholder.map((course) => ({
+                name: course.name,
+                path: course.path,
+              })),
+        },
+        {
+          icon: <MessageSquare size={18} />,
+          name: "Feedback & Reviews",
+          path: "/feedback",
+        },
+        {
+          icon: <BarChart size={18} />,
+          name: "Results & Grades",
+          path: "/grades",
+        },
+        {
+          icon: <Calendar size={18} />,
+          name: "TimeTable",
+          path: "/timetable-student",
+        },
+        { icon: <User size={18} />, name: "Student Profile", path: "/profile" },
+      ];
+    }
+    return [];
+  };
+
+  const navItems = getNavItems();
+
+  const othersItems: NavItem[] = [
+    {
+      icon: <PieChartIcon />,
+      name: "Charts",
+      subItems: [
+        { name: "Line Chart", path: "/line-chart", pro: false },
+        { name: "Bar Chart", path: "/bar-chart", pro: false },
+      ],
+    },
+    {
+      icon: <BoxCubeIcon />,
+      name: "UI Elements",
+      subItems: [
+        { name: "Alerts", path: "/alerts", pro: false },
+        { name: "Avatar", path: "/avatars", pro: false },
+        { name: "Badge", path: "/badge", pro: false },
+        { name: "Buttons", path: "/buttons", pro: false },
+        { name: "Images", path: "/images", pro: false },
+        { name: "Videos", path: "/videos", pro: false },
+      ],
+    },
+    {
+      icon: <PlugInIcon />,
+      name: "Authentication",
+      subItems: [
+        { name: "Sign In", path: "/signin", pro: false },
+        { name: "Sign Up", path: "/signup", pro: false },
+      ],
+    },
+  ];
+
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
@@ -220,12 +267,9 @@ const AppSidebar: React.FC = () => {
     type: "main" | "others";
     index: number;
   } | null>(null);
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
-    {}
-  );
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
     (path: string) => location.pathname === path,
     [location.pathname]

@@ -1,17 +1,119 @@
+import { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
-
+interface UserData {
+  name: string;
+  role: string;
+  profilePicture: string;
+}
 
 export default function UserMetaCard() {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    // TODO (maybe) Handle save logic here
-    console.log("Saving changes...");
-    closeModal();
+  const userRfid = "6323678"; // Replace with dynamic RFID if needed
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`http://193.203.162.232:10000/StudentProfile/profile?rfid=${userRfid}`);
+        setUserData(response.data);
+        
+        // Set default preview URL
+        if (response.data.profilePicture) {
+          setPreviewUrl(`${response.data.profilePicture}`);
+        } else {
+          setPreviewUrl("/images/user/profile.jpg");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("Failed to load profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [userRfid]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
+
+  const handleSave = async () => {
+    if (!selectedFile) {
+      toast.error("Please select a file first");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("profilePicture", selectedFile);
+      formData.append("rfid", userRfid);
+
+      const response = await axios.post(
+        "http://193.203.162.232:10000/user/upload-profile-picture",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      // Update the profile picture URL
+      setPreviewUrl(`http://193.203.162.232:10000/static/profilePictures/${response.data.filename}`);
+      toast.success("Profile picture updated successfully");
+      closeModal();
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      toast.error("Failed to update profile picture");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading && !userData) {
+    return (
+      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
+        <div className="text-red-500">Failed to load profile data</div>
+      </div>
+    );
+  }
+
+  // Split name into first and last name for display
+  const nameParts = userData.name.split(' ');
+  const firstName = nameParts[0];
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
   return (
     <>
@@ -19,15 +121,19 @@ export default function UserMetaCard() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
             <div className="w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-              <img src="/images/user/profile.jpg" alt="user" />
+              <img 
+                src={previewUrl || "/images/user/profile.jpg"} 
+                alt="user" 
+                className="object-cover w-full h-full"
+              />
             </div>
             <div className="order-3 xl:order-2">
               <h4 className="mb-2 text-lg font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                Jalal Ahmed
+                {firstName} {lastName}
               </h4>
               <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Front-end Developer
+                  {userData.role}
                 </p>
               </div>
             </div>
@@ -35,6 +141,7 @@ export default function UserMetaCard() {
           <button
             onClick={openModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
+            disabled={loading}
           >
             <svg
               className="fill-current"
@@ -51,41 +158,58 @@ export default function UserMetaCard() {
                 fill=""
               />
             </svg>
-            Edit
+            {loading ? "Loading..." : "Edit"}
           </button>
         </div>
       </div>
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[500px] m-4">
         <div className="no-scrollbar relative w-full max-w-[500px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-8">
           <div className="px-2 pr-14">
-        <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-          Update Profile Photo
-        </h4>
-        <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-          Upload a new profile photo to update your account.
-        </p>
+            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+              Update Profile Photo
+            </h4>
+            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+              Upload a new profile photo to update your account.
+            </p>
           </div>
           <form className="flex flex-col items-center">
-        <div className="mb-6">
-          <div className="w-32 h-32 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
-            <img src="/images/user/profile.jpg" alt="Current Profile" />
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-4">
-          {/* // TODO fix the error */}
-          <Input type="file" accept="image/*" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Supported formats: JPG, PNG. Max size: 2MB.
-          </p>
-        </div>
-        <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-          <Button size="sm" variant="outline" onClick={closeModal}>
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSave}>
-            Save Photo
-          </Button>
-        </div>
+            <div className="mb-6">
+              <div className="w-32 h-32 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
+                <img 
+                  src={previewUrl || "/images/user/profile.jpg"} 
+                  alt="Current Profile" 
+                  className="object-cover w-full h-full"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <Input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleFileChange}
+                disabled={loading}
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Supported formats: JPG, PNG. Max size: 2MB.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={closeModal}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSave}
+                disabled={loading || !selectedFile}
+              >
+                {loading ? "Uploading..." : "Save Photo"}
+              </Button>
+            </div>
           </form>
         </div>
       </Modal>

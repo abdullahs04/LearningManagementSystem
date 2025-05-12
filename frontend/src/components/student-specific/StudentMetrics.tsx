@@ -1,15 +1,28 @@
-// TODO: read from the struct saved
+import axios from 'axios';
+import { useEffect, useState } from 'react';
+
 
 export default function StudentMetrics() {
+  const [metrics, setMetrics] = useState(null);
+
+  useEffect(() => {
+    axios.get('http://193.203.162.232:10000/metrics/student_metrics', { params: { student_rfid: 6323678 } })
+      .then(res => setMetrics(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  if (!metrics) return <div>Loading...</div>;
+
   return (
     <div className="grid grid-cols-2 gap-6">
-      <MetricCard title="Current Courses" value="5" />
-      <MetricCard title="Average Percentage" value="91 %" />
-      <MetricCard title="Pending Assignments" value="3" />
-      <MetricCard title="Average Attendance" value="45 %" />
+      <MetricCard title="Current Courses" value={metrics.current_courses} />
+      <MetricCard title="Average Percentage" value={`${metrics.average_percentage} %`} />
+      <MetricCard title="Pending Assignments" value={metrics.pending_assignments} />
+      <MetricCard title="Average Attendance" value={`${metrics.average_attendance} %`} />
     </div>
   );
 }
+
 
 type MetricCardProps = {
   title: string;

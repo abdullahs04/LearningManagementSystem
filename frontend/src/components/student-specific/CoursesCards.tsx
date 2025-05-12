@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { BookOpen, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 type CourseCardProps = {
   id: string;
@@ -66,45 +68,38 @@ function CourseCard({ id, courseCode, courseName, instructor }: CourseCardProps)
   );
 }
 
+
 export default function CoursesCards() {
-  const courses = [
-    {
-      id: "course-1",
-      courseCode: "CS101",
-      courseName: "Introduction to Computer Science",
-      instructor: "Dr. Jane Smith",
-    },
-    {
-      id: "course-2",
-      courseCode: "MATH201",
-      courseName: "Calculus II",
-      instructor: "Prof. John Doe",
-    },
-    {
-      id: "course-3",
-      courseCode: "PHY150",
-      courseName: "Physics for Engineers",
-      instructor: "Dr. Robert Johnson",
-    },
-    {
-      id: "course-4",
-      courseCode: "ENG102",
-      courseName: "Technical Writing",
-      instructor: "Prof. Lisa Brown",
-    },
-    {
-      id: "course-5",
-      courseCode: "BIO110",
-      courseName: "Introduction to Biology",
-      instructor: "Dr. Sarah Williams",
-    },
-    {
-      id: "course-6",
-      courseCode: "CHEM200",
-      courseName: "Organic Chemistry",
-      instructor: "Prof. Michael Chen",
-    },
-  ];
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const studentRfid = "6323678"; 
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await axios.get(`http://193.203.162.232:10000/MyCourses/${studentRfid}/MyCourses`);
+        if (res.data.success) {
+          const formattedCourses = res.data.subjects.map((subject, index) => ({
+            id: `course-${index + 1}`,
+            courseCode: subject.code,
+            courseName: subject.name,
+            instructor: subject.instructor,
+          }));
+          setCourses(formattedCourses);
+        }
+      } catch (err) {
+        console.error("Error fetching courses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center text-white">Loading courses...</div>;
+  }
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
