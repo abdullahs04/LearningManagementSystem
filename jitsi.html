@@ -44,6 +44,7 @@
 
   <div class="controls">
     <input type="text" id="username" placeholder="Enter your name" />
+    <input type="text" id="subject_id" placeholder="Enter Subject ID" />
     <button onclick="joinMeeting()">Join Meeting</button>
     <button onclick="resetMeeting()" class="reset">Reset Room</button>
   </div>
@@ -54,13 +55,15 @@
   <script>
   function joinMeeting() {
     const userName = document.getElementById('username').value || "Guest";
-
-    // Get existing room ID from localStorage or create a new one
-    let roomId = localStorage.getItem('currentRoomId');
-    if (!roomId) {
-      roomId = "class_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-      localStorage.setItem('currentRoomId', roomId);
+    const subjectId = document.getElementById('subject_id').value;
+    
+    if (!subjectId) {
+      alert('Please enter a Subject ID');
+      return;
     }
+
+    // Using the subject_id as the room ID
+    const roomId = "subject_" + subjectId;
 
     // Using HTTPS and port 8443
     const url = `https://localhost:8443/${roomId}?name=${encodeURIComponent(userName)}`;
@@ -83,10 +86,10 @@
   }
 
   function resetMeeting() {
-    localStorage.removeItem('currentRoomId');
+    document.getElementById('subject_id').value = '';
     document.getElementById('roomInfo').style.display = "none";
     document.getElementById('meet').innerHTML = '';
-    alert('Meeting room reset. Click Join Meeting to create a new room.');
+    alert('Meeting room reset. Enter a Subject ID and click Join Meeting to join a subject room.');
   }
   </script>
 </body>
