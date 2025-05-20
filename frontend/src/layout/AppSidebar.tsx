@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
-import { FiVideo } from "react-icons/fi"; // Added for meeting icon
+import { FiVideo } from "react-icons/fi";
 
 import {
   BoxCubeIcon,
@@ -70,30 +70,30 @@ type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
-  meetingAction?: (courseId: string) => void; // Added meeting action
+  subItems?: { 
+    name: string; 
+    path: string; 
+    pro?: boolean; 
+    new?: boolean;
+    meetingAction?: (courseId: string, courseName: string) => void;
+  }[];
 };
 
 const AppSidebar: React.FC = () => {
   const [studentCourses, setStudentCourses] = useState<Course[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [errorCourses, setErrorCourses] = useState<string | null>(null);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
-  const [meetingUrl, setMeetingUrl] = useState("");
-  const navigate = useNavigate();
   
   const studentRfid = "6323678"; 
 
-  // Function to handle meeting start/join
-  const handleMeetingAction = (courseId: string) => {
+  const handleMeetingAction = (courseId: string, courseName: string) => {
     const roomId = `subject_${courseId}`;
     const userName = UserLoggedInIs === "teacher" 
-      ? "Teacher" 
-      : "Student"; // In real app, use actual user name
+      ? `Teacher_${courseName}` 
+      : `Student_${courseName}`;
     
-    const url = `https://localhost:8443/${roomId}?name=${encodeURIComponent(userName)}`;
-    setMeetingUrl(url);
-    setShowMeetingModal(true);
+    const meetingUrl = `https://localhost:8443/${roomId}?name=${encodeURIComponent(userName)}`;
+    window.open(meetingUrl, '_blank', 'noopener,noreferrer');
   };
 
   useEffect(() => {
@@ -179,7 +179,7 @@ const AppSidebar: React.FC = () => {
           subItems: TeacherCoursesPlaceholder.map((course) => ({
             name: course.name,
             path: course.path,
-            meetingAction: handleMeetingAction // Added meeting action
+            meetingAction: () => handleMeetingAction(course.path.split('/').pop() || '', course.name)
           })),
         },
         {
@@ -217,12 +217,12 @@ const AppSidebar: React.FC = () => {
             ? studentCourses.map((course) => ({
                 name: course.name,
                 path: `/course/${course.id}`,
-                meetingAction: handleMeetingAction // Added meeting action
+                meetingAction: () => handleMeetingAction(course.id, course.name)
               }))
             : StudentCoursesPlaceholder.map((course) => ({
                 name: course.name,
                 path: course.path,
-                meetingAction: handleMeetingAction // Added meeting action
+                meetingAction: () => handleMeetingAction(course.path.split('/').pop() || '', course.name)
               })),
         },
         {
@@ -247,6 +247,37 @@ const AppSidebar: React.FC = () => {
   };
 
   const navItems = getNavItems();
+
+  const othersItems: NavItem[] = [
+    {
+      icon: <PieChartIcon />,
+      name: "Charts",
+      subItems: [
+        { name: "Line Chart", path: "/line-chart", pro: false },
+        { name: "Bar Chart", path: "/bar-chart", pro: false },
+      ],
+    },
+    {
+      icon: <BoxCubeIcon />,
+      name: "UI Elements",
+      subItems: [
+        { name: "Alerts", path: "/alerts", pro: false },
+        { name: "Avatar", path: "/avatars", pro: false },
+        { name: "Badge", path: "/badge", pro: false },
+        { name: "Buttons", path: "/buttons", pro: false },
+        { name: "Images", path: "/images", pro: false },
+        { name: "Videos", path: "/videos", pro: false },
+      ],
+    },
+    {
+      icon: <PlugInIcon />,
+      name: "Authentication",
+      subItems: [
+        { name: "Sign In", path: "/signin", pro: false },
+        { name: "Sign Up", path: "/signup", pro: false },
+      ],
+    },
+  ];
 
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
@@ -390,22 +421,25 @@ const AppSidebar: React.FC = () => {
             >
               <ul className="mt-2 space-y-1 ml-9">
                 {nav.subItems.map((subItem) => (
-                  <li key={subItem.name} className="flex items-center justify-between">
+                  <li key={subItem.name} className="flex items-center justify-between group">
                     <Link
                       to={subItem.path}
                       className={`menu-dropdown-item ${
                         isActive(subItem.path)
                           ? "menu-dropdown-item-active"
                           : "menu-dropdown-item-inactive"
-                      }`}
+                      } flex-1`}
                     >
                       {subItem.name}
                     </Link>
-                    {/* Add meeting button for each course */}
                     {subItem.meetingAction && (
                       <button
-                        onClick={() => subItem.meetingAction(subItem.path.split('/').pop() || '')}
-                        className="p-1 text-blue-500 hover:text-blue-600"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          subItem.meetingAction?.();
+                        }}
+                        className="p-1 text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
                         title={UserLoggedInIs === "teacher" ? "Start Meeting" : "Join Meeting"}
                       >
                         <FiVideo size={16} />
@@ -422,99 +456,70 @@ const AppSidebar: React.FC = () => {
   );
 
   return (
-    <>
-      <aside
-        className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-          ${
-            isExpanded || isMobileOpen
-              ? "w-[290px]"
-              : isHovered
-              ? "w-[290px]"
-              : "w-[90px]"
-          }
-          ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0`}
-        onMouseEnter={() => !isExpanded && setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+    <aside
+      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+        ${
+          isExpanded || isMobileOpen
+            ? "w-[290px]"
+            : isHovered
+            ? "w-[290px]"
+            : "w-[90px]"
+        }
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0`}
+      onMouseEnter={() => !isExpanded && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={`py-8 flex ${
+          !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+        }`}
       >
-        <div
-          className={`py-8 flex ${
-            !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
-        >
-          <Link to="/">
-            {isExpanded || isHovered || isMobileOpen ? (
-              <>
-                <img
-                  className="dark:hidden"
-                  src="/images/logo/logo.svg"
-                  alt="Logo"
-                  width={150}
-                  height={40}
-                />
-                <img
-                  className="hidden dark:block"
-                  src="/images/logo/logo-dark.svg"
-                  alt="Logo"
-                  width={150}
-                  height={40}
-                />
-              </>
-            ) : (
+        <Link to="/">
+          {isExpanded || isHovered || isMobileOpen ? (
+            <>
               <img
-                src="/images/logo/logo-icon.svg"
+                className="dark:hidden"
+                src="/images/logo/logo.svg"
                 alt="Logo"
-                width={32}
-                height={32}
+                width={150}
+                height={40}
               />
-            )}
-          </Link>
-        </div>
-        <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-          <nav className="mb-6">
-            <div className="flex flex-col gap-4">
-              <div>
-                <h2
-                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                    !isExpanded && !isHovered
-                      ? "lg:justify-center"
-                      : "justify-start"
-                  }`}
-                ></h2>
-                {renderMenuItems(navItems, "main")}
-              </div>
-            </div>
-          </nav>
-        </div>
-      </aside>
-
-      {/* Meeting Modal */}
-      {showMeetingModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-xl font-bold">
-                {UserLoggedInIs === "teacher" ? "Teaching" : "Attending"} Class Meeting
-              </h3>
-              <button 
-                onClick={() => setShowMeetingModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FiX className="text-xl" />
-              </button>
-            </div>
-            <div className="flex-1">
-              <iframe 
-                src={meetingUrl}
-                allow="camera; microphone; fullscreen; display-capture; autoplay"
-                className="w-full h-full border-0"
-                title="Class Meeting"
-              ></iframe>
+              <img
+                className="hidden dark:block"
+                src="/images/logo/logo-dark.svg"
+                alt="Logo"
+                width={150}
+                height={40}
+              />
+            </>
+          ) : (
+            <img
+              src="/images/logo/logo-icon.svg"
+              alt="Logo"
+              width={32}
+              height={32}
+            />
+          )}
+        </Link>
+      </div>
+      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+        <nav className="mb-6">
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                }`}
+              ></h2>
+              {renderMenuItems(navItems, "main")}
             </div>
           </div>
-        </div>
-      )}
-    </>
+        </nav>
+      </div>
+    </aside>
   );
 };
 
